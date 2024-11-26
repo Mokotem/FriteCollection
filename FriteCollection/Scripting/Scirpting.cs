@@ -31,7 +31,7 @@ namespace FriteCollection.Scripting
         /// <summary>
         /// Scène de départ.
         /// </summary>
-        public GameName.Scenes StartScene;
+        public Module.Scenes StartScene;
 
         public string WindowName;
     }
@@ -356,14 +356,14 @@ namespace FriteCollection.Scripting
 
     public abstract class Script : Executable
     {
-        public Script(GameName.Scenes scene)
+        public Script(Module.Scenes scene)
         {
             _attributedScene = scene;
         }
 
-        private GameName.Scenes _attributedScene;
+        private Module.Scenes _attributedScene;
 
-        public GameName.Scenes AttributedScene
+        public Module.Scenes AttributedScene
         {
             get
             {

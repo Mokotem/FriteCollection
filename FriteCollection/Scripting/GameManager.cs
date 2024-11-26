@@ -17,11 +17,11 @@ namespace FriteCollection.Scripting
             System.Diagnostics.Debug.WriteLine(finalTxt);
         }
 
-        private static GameName.Scenes _currentScene;
+        private static Module.Scenes _currentScene;
         /// <summary>
         /// Scène en cour d'execution.
         /// </summary>
-        public static GameName.Scenes CurrentScene
+        public static Module.Scenes CurrentScene
         {
             get
             {
@@ -104,7 +104,7 @@ namespace FriteCollection.Scripting
     {
         private static readonly string path = Path.Combine
             (Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            @"FriteCollection\Save_" + Assembly.GetAssembly(typeof(GameName.Settings)).FullName + ".json");
+            @"FriteCollection\Save_" + Assembly.GetAssembly(typeof(Module.Settings)).FullName + ".json");
 
         public static string SavePath
         {

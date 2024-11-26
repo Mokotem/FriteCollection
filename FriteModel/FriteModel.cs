@@ -13,7 +13,7 @@ namespace FriteModel
     {
         private GraphicsDeviceManager graphics;
         public SpriteBatch SpriteBatch;
-        private GameName.Settings onSettings;
+        private Module.Settings onSettings;
 
         public static MonoGame instance;
 
@@ -54,7 +54,7 @@ namespace FriteModel
         {
             Music.Volume = 0.5f;
             Window.AllowUserResizing = false;
-            onSettings = new GameName.Settings();
+            onSettings = new Module.Settings();
             onSettings.SetGameSettings();
             Window.Title = GetSeetings.Settings.WindowName;
 

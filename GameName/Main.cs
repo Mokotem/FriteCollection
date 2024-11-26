@@ -1,6 +1,6 @@
 ﻿using FriteCollection.Scripting;
 
-namespace GameName
+namespace Module
 {
     public class Settings : GetSeetings, ISetGameSettings
     {

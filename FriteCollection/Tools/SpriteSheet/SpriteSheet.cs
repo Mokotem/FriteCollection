@@ -8,6 +8,11 @@ namespace FriteCollection.Tools.SpriteSheet
     {
         private readonly Texture2D[,] textures;
 
+        /// <summary>
+        /// Créer une page de sprite. Il ne doit pas y avoir d'espace entre les cases et la taille des cases doit etre régulière.
+        /// </summary>
+        /// <param name="width">largeure d'une case</param>
+        /// <param name="height">hauteur d'une case</param>
         public SpriteSheet(Texture2D texture, int width, int height)
         {
             int wCount = texture.Width / width;
@@ -32,6 +37,12 @@ namespace FriteCollection.Tools.SpriteSheet
             }
         }
 
+        /// <summary>
+        /// acceder à une texture de la sheet.
+        /// </summary>
+        /// <param name="x">colonne</param>
+        /// <param name="y">ligne</param>
+        /// <returns></returns>
         public Texture2D this[int x, int y]
         {
             get

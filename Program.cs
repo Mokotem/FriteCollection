@@ -1,2 +1,1 @@
-﻿using FriteModel.MonoGame game = new FriteModel.MonoGame();
-game.Run();
+﻿new FriteModel.MonoGame().Run();
