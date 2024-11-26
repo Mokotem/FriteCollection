@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35208.52
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FriteCollection", "FriteCollection.csproj", "{42E89B31-D888-4312-B2A7-85D1EFC2163B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{42E89B31-D888-4312-B2A7-85D1EFC2163B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42E89B31-D888-4312-B2A7-85D1EFC2163B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42E89B31-D888-4312-B2A7-85D1EFC2163B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42E89B31-D888-4312-B2A7-85D1EFC2163B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {848CB45A-4A5B-482C-BFB2-E8D1AE16DF88}
+	EndGlobalSection
+EndGlobal
