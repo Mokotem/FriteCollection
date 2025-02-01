@@ -1,7 +1,7 @@
 ﻿
 using FriteCollection.Scripting;
 
-namespace BulletHell;
+namespace GameName;
 
 public static class Main
 {

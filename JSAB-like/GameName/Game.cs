@@ -1,7 +1,7 @@
 ﻿using FriteCollection.Scripting;
 using FriteCollection.Entity;
 
-namespace BulletHell;
+namespace GameName;
 
 public class GameScript : Script
 {

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
-using FriteCollection.Audio;
 using FriteCollection.Entity;
 using FriteCollection.Scripting;
 using Microsoft.Xna.Framework;
@@ -55,7 +54,7 @@ internal class MonoGame : Game
 
     protected override void Initialize()
     {
-        GameManager.SetSettings(BulletHell.Main.SetGameSettings());
+        GameManager.SetSettings(GameName.Main.SetGameSettings());
 
         Window.AllowUserResizing = false;
         Window.Title = S.WindowName;
