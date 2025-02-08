@@ -1,11 +1,17 @@
 ﻿using FriteCollection.Audio;
-using FriteCollection.Entity;
 using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 
 namespace FriteCollection;
+
+public enum Bounds
+{
+    TopLeft, Top, TopRight,
+    Left, Center, Right,
+    BottomLeft, Bottom, BottomRight,
+}
 
 public class Settings
 {

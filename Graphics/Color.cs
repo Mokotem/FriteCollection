@@ -182,11 +182,14 @@ namespace FriteCollection.Graphics
     {
         private RGB _rgb = new(0, 0, 0);
         private HSV _hsv = new(0, 0, 0);
-        private string _lastEdit = "rgb";
+        private bool _lastEditIsRGB = true;  // c'est pour éviter de recalculer
 
         public static readonly Color White = new Color(1, 1, 1);
         public static readonly Color Black = new Color(0, 0, 0);
 
+        /// <summary>
+        /// moyenne (0f - 1f)
+        /// </summary>
         public float Average
         {
             get
@@ -260,7 +263,7 @@ namespace FriteCollection.Graphics
         {
             get
             {
-                if (_lastEdit == "hsv")
+                if (_lastEditIsRGB == false)
                 {
                     float H = _hsv.H;
                     float S = _hsv.S;
@@ -286,7 +289,7 @@ namespace FriteCollection.Graphics
                     _rgb.G = Gp + m;
                     _rgb.B = Bp + m;
 
-                    _lastEdit = "rgb";
+                    _lastEditIsRGB = true;
                 }
 
                 return _rgb;
@@ -294,7 +297,7 @@ namespace FriteCollection.Graphics
             set
             {
                 _rgb = value;
-                _lastEdit = "rgb";
+                _lastEditIsRGB = true;
             }
         }
 
@@ -305,7 +308,7 @@ namespace FriteCollection.Graphics
         {
             get
             {
-                if (_lastEdit == "rgb")
+                if (_lastEditIsRGB)
                 {
                     float Rp = _rgb.R;
                     float Gp = _rgb.G;
@@ -329,7 +332,7 @@ namespace FriteCollection.Graphics
                     V = Cmax;
 
                     _hsv = new HSV(H, S, V);
-                    _lastEdit = "hsv";
+                    _lastEditIsRGB = false;
                 }
 
                 return _hsv;
@@ -338,8 +341,13 @@ namespace FriteCollection.Graphics
             set
             {
                 _hsv = value;
-                _lastEdit = "hsv";
+                _lastEditIsRGB = false;
             }
+        }
+
+        public Microsoft.Xna.Framework.Color ToMonogameColor()
+        {
+            return new Microsoft.Xna.Framework.Color(_rgb.R, _rgb.G, _rgb.B);
         }
     }
 }

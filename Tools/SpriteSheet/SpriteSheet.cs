@@ -1,9 +1,8 @@
 ﻿using System;
-using FriteCollection.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace FriteCollection.FriteCollection.Tools.SpriteSheet
+namespace FriteCollection.Tools.SpriteSheet
 {
     public class SpriteSheet : IDisposable
     {

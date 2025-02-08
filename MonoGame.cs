@@ -51,9 +51,9 @@ public class MonoGame : Game
     }
 
     internal List<Executable> CurrentExecutables = new List<Executable>();
-    internal FriteCollection.Entity.Point
-        mouseClickedPosition = FriteCollection.Entity.Point.Zero,
-        mousePosition = FriteCollection.Entity.Point.Zero;
+    internal FriteCollection.Point
+        mouseClickedPosition = FriteCollection.Point.Zero,
+        mousePosition = FriteCollection.Point.Zero;
 
     protected override void Initialize()
     {
@@ -68,7 +68,7 @@ public class MonoGame : Game
 
         screenBounds = _bf.CreateBounds(S.GameFixeWidth, S.GameFixeHeight);
 
-        Renderer.DefaultTexture = CreateTexture(GraphicsDevice, 2, 2, Color.White);
+        Renderer._defaultTexture = CreateTexture(GraphicsDevice, 2, 2, Color.White);
 
         base.Initialize();
 
@@ -225,7 +225,7 @@ public class MonoGame : Game
         _delta = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000f;
 
         MouseState mstate = Mouse.GetState();
-        FriteCollection.Entity.Point v = new(
+        FriteCollection.Point v = new(
             (mstate.Position.X) * S.GameFixeWidth / (_fullScreen ? display.Width : S.WindowWidth),
             (mstate.Position.Y) * S.GameFixeHeight / (_fullScreen ? display.Height : S.WindowHeight));
         if (Mouse.GetState().LeftButton == ButtonState.Pressed && !previousMouseLeft)

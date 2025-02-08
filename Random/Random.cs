@@ -1,5 +1,8 @@
 ﻿
-namespace FriteCollection.Scripting;
+/// <summary>
+/// Module Random fait maison parceque c'est marant.
+/// </summary>
+namespace FriteCollection.Random;
 
 public class Random
 {
@@ -31,15 +34,15 @@ public class Random
         Modifier f = _branche % 2 == 0 ? F1 : F2;
         ulong r = f(_branche);
 
-        if (r > 100000)
+        if (r > ulong.MaxValue)
             r = (r - (r % 100)) / 100;
         _branche = r;
     }
 
-    public uint Next(uint maxValue)
+    public ulong Next(ulong maxValue)
     {
         _next();
-        return (uint)(Branche % maxValue);
+        return Branche % maxValue;
     }
 
     public float Next(float maxValue)

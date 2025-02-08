@@ -1,26 +1,15 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using FriteCollection.Scripting;
 
 namespace FriteCollection.Entity
 {
     public abstract class Entity
     {
-        /// <summary>
-        /// Space data of the Entity.
-        /// </summary>
         public Space Space = new();
 
-        /// <summary>
-        /// Aesthetic data of the Entity.
-        /// </summary>
         public Renderer Renderer = new Renderer();
 
-        /// <summary>
-        /// Draws the entity on screen.
-        /// </summary>
-        /// <param name="textureSpacePart">only draw a part of the texture</param>
         public virtual void Draw() { }
 
         private protected Color GetEntColor()
@@ -53,7 +42,7 @@ namespace FriteCollection.Entity
         {
             if (Renderer.hide == false)
             {
-                Vector entPosi = Space.GetScreenPosition(includeCamera: !Space.UI && !Space.LockCamera);
+                Vector entPosi = Space.GetScreenPosition();
                 Vector s = Space.Copy().Scale;
                 float flipFactor = 0f;
 
@@ -140,7 +129,7 @@ namespace FriteCollection.Entity
         {
             if (Renderer.hide == false && _text != null)
             {
-                Vector entPosi = Space.GetScreenPosition(includeCamera: !Space.UI);
+                Vector entPosi = Space.GetScreenPosition();
 
                 foreach (Vector pos in new Vector[8]
                 {
