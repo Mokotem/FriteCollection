@@ -1,5 +1,6 @@
 ﻿using FriteCollection.Entity;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections;
 
@@ -8,6 +9,43 @@ using System.Collections;
 /// </summary>
 namespace FriteCollection
 {
+    public static class Input
+    {
+        private static KeyboardState _kbstate;
+        private static MouseState _mouseState;
+
+        public static KeyboardState Keyboard => _kbstate;
+
+        public static class Mouse
+        {
+            public static MouseState Sate => _mouseState;
+
+            private static Bounds _origin = Bounds.Center;
+            public static Bounds GridOrigin
+            {
+                get => _origin;
+                set
+                {
+                    _origin = value;
+                }
+            }
+
+            public static Vector Position
+            {
+                get
+                {
+                    Vector v = BoundFunc.BoundToVector(_origin, Screen.widht, Screen.height);
+                    return new Vector(_mouseState.Position.X - v.x, -_mouseState.Position.Y + v.y);
+                }
+            }
+        }
+
+        internal static void SetStates(KeyboardState kbs, MouseState mss)
+        {
+            _kbstate = kbs;
+            _mouseState = mss;
+        }
+    }
 
     /// <summary>
     /// Type de base de tous les types du genre tableau, listes, piles, ...
@@ -18,7 +56,7 @@ namespace FriteCollection
 
         private protected struct ListEnum : IEnumerator
         {
-            private T[] _values;
+            private readonly T[] _values;
             private long _index;
 
             public ListEnum(T[] v)

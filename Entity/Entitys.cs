@@ -112,7 +112,6 @@ namespace FriteCollection.Entity
     public class Text : Entity, ICopy<Text>
     {
         private int _spacing;
-        private static readonly BoundFunc _boundFuncs = new();
 
         public Text Copy()
         {
@@ -205,7 +204,7 @@ namespace FriteCollection.Entity
                     font.MeasureString(value).X + _spacing * (value.Length - 1),
                     font.MeasureString(value).Y
                 );
-                _bounds = _boundFuncs.CreateBounds(
+                _bounds = BoundFunc.CreateBounds(
                     font.MeasureString(value).X + _spacing * (value.Length - 1),
                     font.MeasureString(value).Y
                     );

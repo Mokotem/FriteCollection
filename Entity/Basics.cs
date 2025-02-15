@@ -51,7 +51,7 @@ namespace FriteCollection.Entity
         internal Vector GetScreenPosition()
         {
             return
-                GridOrigin == Camera.GridOrigin ?
+                _eGridOrigin == Camera.GridOrigin ?
                 new Vector(
                     (Position.x - Camera.Position.x) * Camera.zoom
                     + GameManager.Instance.screenBounds[(int)GridOrigin].x,
@@ -127,9 +127,9 @@ namespace FriteCollection.Entity
         }
     }
 
-    class BoundFunc
+    internal static class BoundFunc
     {
-        public Vector BoundToVector(Bounds b, float width, float height)
+        internal static Vector BoundToVector(Bounds b, float width, float height)
         {
             return b switch
             {
@@ -149,7 +149,7 @@ namespace FriteCollection.Entity
             };
         }
 
-        public Vector[] CreateBounds(float width, float height)
+        internal static Vector[] CreateBounds(float width, float height)
         {
             Vector[] vList = new Vector[9];
             for (int i = 0; i < 9; i++)
@@ -166,8 +166,6 @@ namespace FriteCollection.Entity
     /// </summary>
     public class Renderer : ICopy<Renderer>
     {
-        private static readonly BoundFunc _boundFuncs = new();
-
         internal static Texture2D _defaultTexture;
         public static Texture2D DefaultTexture => _defaultTexture;
         private byte _a = 255;
@@ -189,7 +187,7 @@ namespace FriteCollection.Entity
 
         public Renderer()
         {
-            _bounds = _boundFuncs.CreateBounds(2, 2);
+            _bounds = BoundFunc.CreateBounds(2, 2);
             _texture = _defaultTexture;
         }
 
@@ -229,7 +227,7 @@ namespace FriteCollection.Entity
             set
             {
                 _texture = value;
-                _bounds = _boundFuncs.CreateBounds(value.Width, value.Height);
+                _bounds = BoundFunc.CreateBounds(value.Width, value.Height);
             }
         }
 

@@ -1,5 +1,4 @@
-﻿using FriteCollection.Audio;
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json;
 using System;
 using System.IO;
@@ -25,6 +24,7 @@ public class Settings
     public byte UICoef = 1;
     public byte StartScene = 0;
     public byte FPS = 60;
+    public SpriteFont Font;
 }
 
 public static class GameManager
@@ -51,7 +51,9 @@ public static class GameManager
     }
 
 
-    public static Settings Settings => _settings;
+    internal static Settings Settings => _settings;
+
+    public static SpriteFont Font => _settings.Font;
 
     public static void SetSettings(Settings settings)
     {
@@ -64,8 +66,6 @@ public static class GameManager
         foreach (object s in listText) { finalTxt += s.ToString() + "  "; }
         System.Diagnostics.Debug.WriteLine(finalTxt);
     }
-
-    public static SpriteFont GameFont;
 
     private static byte _currentScene;
     /// <summary>
@@ -97,23 +97,6 @@ public static class Open
     public static Texture2D Texture(string path)
     {
         return GameManager.Instance.Content.Load<Texture2D>(path);
-    }
-
-    /// <summary>
-    /// Ouvrir un son. (mp3, wma, ogg)
-    /// </summary>
-    public static Music Music(string path)
-    {
-        return new Music(GameManager.Instance.Content.Load<Microsoft.Xna.Framework.Media.Song>(path));
-    }
-
-    /// <summary>
-    /// Ouvrir un son. (wav)
-    /// </summary>
-    public static SoundEffect SoundEffect(string path)
-    {
-        return new SoundEffect
-            (GameManager.Instance.Content.Load<Microsoft.Xna.Framework.Audio.SoundEffect>(path));
     }
 
     /// <summary>

@@ -18,19 +18,16 @@ public class MonoGame : Game
 
     private bool changingScene = false;
     private Settings S => GameManager.Settings;
+    private readonly Type[] _childTypes;
 
-    public MonoGame()
+    public MonoGame(Type[] childTypes)
     {
-        Content.RootDirectory = "Content";
+        _childTypes = childTypes;
         IsMouseVisible = true;
         graphics = new GraphicsDeviceManager(this);
         Window.AllowAltF4 = false;
         Window.AllowUserResizing = false;
-    }
-
-    public void SetTypes(Type[] t)
-    {
-        allTypes = t;
+        GameManager.SetGameInstance(this);
     }
 
     internal float _timer = 0f, _delta = 0f, _targetTimer = 0f;
@@ -57,8 +54,6 @@ public class MonoGame : Game
 
     protected override void Initialize()
     {
-        GameManager.SetGameInstance(this);
-
         Window.AllowUserResizing = false;
         Window.Title = S.WindowName;
 
@@ -66,7 +61,7 @@ public class MonoGame : Game
         graphics.PreferredBackBufferHeight = S.WindowHeight;
         FullScreen = S.FullScreen;
 
-        screenBounds = _bf.CreateBounds(S.GameFixeWidth, S.GameFixeHeight);
+        screenBounds = BoundFunc.CreateBounds(S.GameFixeWidth, S.GameFixeHeight);
 
         Renderer._defaultTexture = CreateTexture(GraphicsDevice, 2, 2, Color.White);
 
@@ -76,19 +71,12 @@ public class MonoGame : Game
         UpdateScriptToScene();
     }
 
-    private Type[] allTypes;
-
     internal void UpdateScriptToScene()
     {
         GameManager.SetGameInstance(this);
-        Content.Unload();
-        Content.Dispose();
-
-        Content = new Microsoft.Xna.Framework.Content.ContentManager(Services);
-        Content.RootDirectory = "Content";
 
         changingScene = true;
-        HitBox.ClearHitboxes();
+        FriteCollection.Entity.Hitboxs.Hitbox.ClearHitboxes(); 
         if (SpriteBatch is not null)
             SpriteBatch.Dispose();
 
@@ -111,16 +99,17 @@ public class MonoGame : Game
         _timer = 0;
         _targetTimer = 0;
 
-        var childTypesScript = allTypes.Where(t => t.IsSubclassOf(typeof(Script)) && !t.IsAbstract);
-
-        foreach (Type type in childTypesScript)
+        foreach (Type type in _childTypes)
         {
-            Script instance = (Script)Activator.CreateInstance(type);
-            if (instance.AttributedScenes == GameManager.CurrentScene)
+            if (type.IsSubclassOf(typeof(Script)))
             {
-                CurrentExecutables.Add(instance);
+                Script instance = (Script)Activator.CreateInstance(type);
+                if (instance.AttributedScenes == GameManager.CurrentScene)
+                {
+                    CurrentExecutables.Add(instance);
+                }
+                else instance = null;
             }
-            else instance = null;
         }
 
         Time.SpaceTime = 1f;
@@ -205,7 +194,7 @@ public class MonoGame : Game
             }
 
             renderTargetUI = new RenderTarget2D(GraphicsDevice, renderTarget.Width, renderTarget.Height);
-            UIscreenBounds = _bf.CreateBounds(renderTarget.Width, renderTarget.Height);
+            UIscreenBounds = BoundFunc.CreateBounds(renderTarget.Width, renderTarget.Height);
             graphics.HardwareModeSwitch = !value;
             graphics.IsFullScreen = value;
             graphics.ApplyChanges();
@@ -214,7 +203,6 @@ public class MonoGame : Game
 
     public Rectangle targetGameRectangle;
 
-    private BoundFunc _bf = new BoundFunc();
     internal Vector[] screenBounds, UIscreenBounds;
     internal bool previousMouseLeft;
 

@@ -1,5 +1,4 @@
-﻿using FriteCollection.Entity;
-using FriteCollection.Scripting;
+﻿using FriteCollection.Entity.Hitboxs;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -8,14 +7,14 @@ namespace FriteCollection.Tools.TileMap;
 
 public class TileSet : IDisposable
 {
-    private HitBox.Rectangle[,] _hitReplaces;
+    private Hitbox.Rectangle[,] _hitReplaces;
     private Entity.Object[,] _entReplaces;
     public readonly List<Entity.Object> entities;
     public List<int> _dontDraw = new List<int>();
     public int Xlenght { get; private set; }
     public int Ylenght { get; private set; }
 
-    public HitBox.Rectangle[,] ReplaceHitbox
+    public Hitbox.Rectangle[,] ReplaceHitbox
     {
         get
         {
@@ -56,7 +55,7 @@ public class TileSet : IDisposable
         Ylenght =
             (sheet.j + _tileSeparation.j) / (_tileSize.j + _tileSeparation.j);
 
-        _hitReplaces = new HitBox.Rectangle[Xlenght, Ylenght];
+        _hitReplaces = new Hitbox.Rectangle[Xlenght, Ylenght];
         _entReplaces = new Entity.Object[Xlenght, Ylenght];
     }
     public readonly Point sheet;
@@ -128,7 +127,7 @@ public class TileMap : IDisposable
         Texture2D backgroundTexture = null,
         bool mergeHitBoxes = true)
     {
-        HitBox.Rectangle[,] _hitboxData;
+        Hitbox.Rectangle[,] _hitboxData;
         Graphics.Color bg;
         if (background != null)
         {
@@ -166,7 +165,7 @@ public class TileMap : IDisposable
             );
         }
 
-        _hitboxData = new HitBox.Rectangle[xCount, yCount];
+        _hitboxData = new Hitbox.Rectangle[xCount, yCount];
 
         foreach (OgmoLayer layer in new OgmoLayer[3] { _file.layers[2], _file.layers[1], _file.layers[0] })
         {
@@ -240,7 +239,7 @@ public class TileMap : IDisposable
                 {
                     if (_hitboxData[x, y] is not null)
                     {
-                        HitBox.Rectangle hit = _hitboxData[x, y].Copy();
+                        Hitbox.Rectangle hit = _hitboxData[x, y].Copy();
                         hit.Active = true;
                         hit.PositionOffset += new Vector
                         (
@@ -281,9 +280,9 @@ public class TileMap : IDisposable
         return result.ToArray();
     }
 
-    private List<HitBox.Rectangle> MergeHitBoxes(ref HitBox.Rectangle[,] lst)
+    private List<Hitbox.Rectangle> MergeHitBoxes(ref Hitbox.Rectangle[,] lst)
     {
-        List<HitBox.Rectangle> result = new List<HitBox.Rectangle>();
+        List<Hitbox.Rectangle> result = new List<Hitbox.Rectangle>();
         int i = -1;
         while (i + 1 < xCount * yCount)
         {
@@ -291,7 +290,7 @@ public class TileMap : IDisposable
             long x = i % xCount;
             long y = i / xCount;
 
-            HitBox.Rectangle hit1 = lst[x, y];
+            Hitbox.Rectangle hit1 = lst[x, y];
 
             if (hit1 is not null)
             {
@@ -300,7 +299,7 @@ public class TileMap : IDisposable
 
                 while (x + width < xCount
                     && lst[x + width, y] is not null
-                    && lst[x + width, y].tag == hit1.tag
+                    && lst[x + width, y]._tag == hit1._tag
                     && lst[x + width, y].Layer == hit1.Layer
                     && lst[x + width, y].LockSize.y == hit1.LockSize.y)
                 {
@@ -308,16 +307,16 @@ public class TileMap : IDisposable
                     width++;
                 }
 
-                bool Cond(ref HitBox.Rectangle[,] h)
+                bool Cond(ref Hitbox.Rectangle[,] h)
                 {
                     if (y + height >= yCount)
                         return false;
-                    HitBox.Rectangle h2 = hit1;
+                    Hitbox.Rectangle h2 = hit1;
                     for (int k = 0; k < width; k++)
                     {
-                        HitBox.Rectangle h1 = h[x + k, y + height];
+                        Hitbox.Rectangle h1 = h[x + k, y + height];
                         if (h1 is null
-                           || h1.tag != h2.tag
+                           || h1._tag != h2._tag
                            || h1.Layer != h2.Layer
                            || h1.LockSize.x != h2.LockSize.x)
                         {
@@ -335,7 +334,7 @@ public class TileMap : IDisposable
                     height++;
                 }
 
-                HitBox.Rectangle hit = hit1.Copy();
+                Hitbox.Rectangle hit = hit1.Copy();
                 hit.Layer = hit1.Layer;
                 hit.Active = true;
                 hit.PositionOffset += new Vector
@@ -347,7 +346,7 @@ public class TileMap : IDisposable
                 hit.PositionOffset.y -= (y + (height - 1) / 2f) * _sheet.TileSize.j;
                 float a = 0f;
                 float b = 0f;
-                if (hit.tag == "red" || hit.tag == "green")
+                if (hit._tag == "red" || hit._tag == "green")
                 {
                     if (width >= height)
                     {

@@ -176,7 +176,7 @@ public abstract class ButtonCore : UI
     private Text titleText;
     private FriteModel.MonoGame instance => GameManager.Instance;
 
-    private bool clic => GameManager.Instance.IsActive && _active && Input.Mouse.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed
+    private bool clic => GameManager.Instance.IsActive && _active && Input.Mouse.Sate.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed
 && IsInRange(instance.mouseClickedPosition)
 && IsInRange(instance.mousePosition)
 && Time.TargetTimer >= 0.2f;
@@ -396,7 +396,7 @@ public class Button : ButtonCore
     {
         if (_active)
         {
-            if (selected && Input.Mouse.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released)
+            if (selected && Input.Mouse.Sate.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released)
             {
                 GameManager.Instance.SpriteBatch.Draw
                     (Entity.Renderer._defaultTexture, new Microsoft.Xna.Framework.Rectangle(
@@ -516,7 +516,7 @@ public class Text : UI
             while (i < txt.Length)
             {
                 string line = "";
-                while (GameManager.GameFont.MeasureString(line).X < rect.Width)
+                while (GameManager.Font.MeasureString(line).X < rect.Width)
                 {
                     line += txt[i] + " ";
                     i += 1;
@@ -525,7 +525,7 @@ public class Text : UI
             }
         }
 
-        Vector2 s = GameManager.GameFont.MeasureString(text);
+        Vector2 s = GameManager.Font.MeasureString(text);
         rect.Width = (int)s.X;
         rect.Height = (int)s.Y;
     }
@@ -567,12 +567,12 @@ public class Text : UI
             })
             {
                 GameManager.Instance.SpriteBatch.DrawString
-                (GameManager.GameFont, text, new Vector2(rect.X + r.X , rect.Y + r.Y),
+                (GameManager.Font, text, new Vector2(rect.X + r.X , rect.Y + r.Y),
                 Microsoft.Xna.Framework.Color.Black, 0, Vector2.Zero, 1f,
                 SpriteEffects.None, 0);
             }
             GameManager.Instance.SpriteBatch.DrawString
-                (GameManager.GameFont, text, new Vector2(rect.X, rect.Y),
+                (GameManager.Font, text, new Vector2(rect.X, rect.Y),
                 new(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B), 0, Vector2.Zero, 1f,
                 SpriteEffects.None, 0);
         }

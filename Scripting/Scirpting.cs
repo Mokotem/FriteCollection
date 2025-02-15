@@ -1,8 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections;
 using Microsoft.Xna.Framework.Input;
-using FriteCollection.Entity;
 
 namespace FriteCollection.Scripting;
 
@@ -108,21 +106,6 @@ public static class Time
     }
 }
 
-public static class Input
-{
-    private static KeyboardState _kbstate;
-    private static MouseState _mouseState;
-
-    public static KeyboardState Keyboard => _kbstate;
-    public static MouseState Mouse => _mouseState;
-
-    internal static void SetStates(KeyboardState kbs, MouseState mss)
-    {
-        _kbstate = kbs;
-        _mouseState = mss;
-    }
-}
-
 public abstract class Executable : IDisposable
 {
     public virtual bool Active { get; }
@@ -185,16 +168,18 @@ public abstract class Executable : IDisposable
     }
 }
 
+
+
 public abstract class Script : Executable
 {
-    public Script(byte scene, bool active = true)
+    public Script(object scene, bool active = true)
     {
-        _attributedScenes = scene;
+        _attributedScenes = (int)scene;
     }
     public override bool Active => true;
-    private byte _attributedScenes;
+    private int _attributedScenes;
 
-    public byte AttributedScenes
+    internal int AttributedScenes
     {
         get
         {
