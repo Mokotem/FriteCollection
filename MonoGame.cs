@@ -54,6 +54,7 @@ public class MonoGame : Game
 
     protected override void Initialize()
     {
+        SpriteBatch = new SpriteBatch(GraphicsDevice);
         Window.AllowUserResizing = false;
         Window.Title = S.WindowName;
 
@@ -77,10 +78,6 @@ public class MonoGame : Game
 
         changingScene = true;
         FriteCollection.Entity.Hitboxs.Hitbox.ClearHitboxes(); 
-        if (SpriteBatch is not null)
-            SpriteBatch.Dispose();
-
-        SpriteBatch = new SpriteBatch(GraphicsDevice);
 
         buttons.Clear();
 

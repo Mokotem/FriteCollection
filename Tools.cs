@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 /// <summary>
 /// Outils de base de programmation utilisés par les sous-modules de FriteCollection.
@@ -11,10 +12,11 @@ namespace FriteCollection
 {
     public static class Input
     {
-        private static KeyboardState _kbstate;
+        private static KeyboardState _kbstate, _prekbstate;
         private static MouseState _mouseState;
 
-        public static KeyboardState Keyboard => _kbstate;
+        public static KeyboardState KB => _kbstate;
+        public static KeyboardState KBP => _prekbstate;
 
         public static class Mouse
         {
@@ -42,6 +44,7 @@ namespace FriteCollection
 
         internal static void SetStates(KeyboardState kbs, MouseState mss)
         {
+            _prekbstate = _kbstate;
             _kbstate = kbs;
             _mouseState = mss;
         }
@@ -86,25 +89,12 @@ namespace FriteCollection
             }
         }
 
-        public void Add(T value)
-        {
-            if (_lenght <= 0)
-            {
-                _values = new T[1] { value };
-            }
-            else
-            {
-                Resize(1);
-                _values[_lenght - 1] = value;
-            }
-        }
-
         private protected void Resize(short scale)
         {
             T[] _destination = new T[_lenght + scale];
             if (scale >= 0)
             {
-                Array.Copy(_values, _destination, _lenght);
+                System.Array.Copy(_values, _destination, _lenght);
                 _values = _destination;
             }
             else
@@ -147,6 +137,72 @@ namespace FriteCollection
         }
     }
 
+    public class Queue<T> : ArrayObject<T>, ICopy<Queue<T>>
+    {
+        public Queue(params T[] elements)
+        {
+            if (elements.Length <= 0)
+            {
+                _values = new T[0];
+            }
+            else
+            {
+                _values = elements;
+            }
+        }
+
+        public uint Lenght => _lenght;
+
+        /// <summary>
+        /// Lire le haut de la pile.
+        /// </summary>
+        public T Read
+        {
+            get
+            {
+                return _values[0];
+            }
+        }
+
+        public void Add(T value)
+        {
+            if (_lenght <= 0)
+            {
+                _values = new T[1] { value };
+            }
+            else
+            {
+                Resize(1);
+                _values[_lenght - 1] = value;
+            }
+        }
+
+        public bool Remove()
+        {
+            if (_lenght > 0)
+            {
+                for (uint j = 0; j < _lenght - 1; j++)
+                {
+                    _values[j] = _values[j + 1];
+                }
+                Resize(-1);
+                return true;
+            }
+            return false;
+        }
+
+        public Queue<T> Copy()
+        {
+            if (_values is null)
+            {
+                return new Queue<T>();
+            }
+            Queue<T> list = new Queue<T>();
+            list._values = (T[])this._values.Clone();
+            return list;
+        }
+    }
+
 
     /// <summary>
     /// Une pile d'éléments.
@@ -178,6 +234,19 @@ namespace FriteCollection
             get
             {
                 return _values[_lenght - 1];
+            }
+        }
+
+        public void Add(T value)
+        {
+            if (_lenght <= 0)
+            {
+                _values = new T[1] { value };
+            }
+            else
+            {
+                Resize(1);
+                _values[_lenght - 1] = value;
             }
         }
 
@@ -258,6 +327,29 @@ namespace FriteCollection
             return new List<T>(result);
         }
 
+        public void Add(T value)
+        {
+            if (_lenght <= 0)
+            {
+                _values = new T[1] { value };
+            }
+            else
+            {
+                Resize(1);
+                _values[_lenght - 1] = value;
+            }
+        }
+
+        public void Sort()
+        {
+            Array.Sort<T>(_values);
+        }
+
+        public void Sort(IComparer<T> comparer)
+        {
+            Array.Sort<T>(_values, comparer);
+        }
+
         /// <summary>
         /// Prive la liste d'éléments.
         /// exemple: [1, 2, 3, 2] / {2} => [1, 3]
@@ -329,7 +421,7 @@ namespace FriteCollection
                     return i;
             }
 
-            throw new IndexOutOfRangeException();
+            throw new System.IndexOutOfRangeException();
         }
 
         /// <summary>
@@ -455,9 +547,6 @@ namespace FriteCollection
     }
 
 
-
-
-
     /// <summary>
     /// Représente un Vecteur, un Point de l'espace.
     /// </summary>
@@ -474,7 +563,15 @@ namespace FriteCollection
         {
             float d1 = v1.x - v2.x;
             float d2 = v1.y - v2.y;
-            return MathF.Sqrt((d1 * d1) + (d2 * d2));
+            return float.Sqrt((d1 * d1) + (d2 * d2));
+        }
+
+        /// <summary>
+        /// Produit scalaire
+        /// </summary>
+        public static float operator ^(Vector v1, Vector v2)
+        {
+            return (v1.x * v2.x) + (v1.y * v2.y);
         }
 
         /// <summary>
@@ -486,7 +583,7 @@ namespace FriteCollection
             if (v2.x - v1.x == 0)
                 return v1.y < v2.y ? 90f : -90f;
             else
-                return MathF.Atan((v2.y - v1.y) / (v2.x - v1.x)) * (180f / MathF.PI) + (v1.x < v2.x ? 0 : 180);
+                return float.Atan((v2.y - v1.y) / (v2.x - v1.x)) * (180f / System.MathF.PI) + (v1.x < v2.x ? 0 : 180);
         }
 
         /// <summary>

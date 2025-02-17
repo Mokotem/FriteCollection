@@ -70,6 +70,27 @@ namespace FriteCollection.Entity
                     }
                 }
 
+                if (Renderer.shadow)
+                {
+                    GameManager.Instance.SpriteBatch.Draw
+                    (
+                        Renderer.Texture,
+                        new Rectangle
+                        (
+                            (int)entPosi.x + 4,
+                            (int)entPosi.y + 4,
+                            (int)MathF.Abs(s.x),
+                            (int)MathF.Abs(s.y)
+                        ),
+                        null,
+                        Color.Black,
+                        Space.rotation * (MathF.PI / 180f) + flipFactor,
+                        Renderer.GetTextureBounds()[(int)Space.CenterPoint].ToVector2(),
+                        SpriteEffects.None,
+                        0
+                    );
+                }
+
                 GameManager.Instance.SpriteBatch.Draw
                 (
                     Renderer.Texture,

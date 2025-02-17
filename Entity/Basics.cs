@@ -189,7 +189,10 @@ namespace FriteCollection.Entity
         {
             _bounds = BoundFunc.CreateBounds(2, 2);
             _texture = _defaultTexture;
+            shadow = true;
         }
+
+        public bool shadow;
 
         public Renderer Copy()
         {

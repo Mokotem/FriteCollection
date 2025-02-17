@@ -73,18 +73,29 @@ public abstract class Hitbox
         Up, Down, Left, Right, None
     }
 
-    private Vector lockPosition;
+    private protected Vector _point;
     private bool positionLocked = false;
 
     public virtual Vector LockPosition
     {
         get => Vector.Zero;
-        set { }
+        set
+        {
+            positionLocked = true;
+            Vector q = BoundFunc.BoundToVector(
+                    _refSpace.GridOrigin,
+                    Screen.widht,
+                    Screen.height
+                    );
+            _point = new Vector(value.x + q.x, -value.y + q.y);
+        }
     }
     public void UnlockPosition()
     {
         positionLocked = false;
     }
+
+    private protected virtual void UpdatePos() { }
 
 
     public struct Collision
@@ -96,14 +107,7 @@ public abstract class Hitbox
     private interface ICollider
     {
         public bool Check(string tag = null);
-
-        public Collision[] AdvancedCheck(
-                out Sides side,
-                string tag = null);
-
         public bool CheckWith(Hitbox collider);
-
-        public Sides AdvancedCheckWith(Hitbox collider);
     }
 
     public void Destroy()
@@ -114,20 +118,280 @@ public abstract class Hitbox
     public static void Debug()
     {
         foreach (List<Hitbox> list in _hitBoxesList)
-            foreach (Rectangle hit in list)
+            foreach (IDraw hit in list)
                 hit.Draw();
+    }
+
+    public class Line : Hitbox, ICollider, IDraw, ICopy<Line>
+    {
+        float _dir;
+        private Vector norme;
+        private float thickness;
+
+        public Line(Space _space, float thickness = 0, string tag = "", byte layer = 0) : base(_space, tag, layer)
+        {
+            this.thickness = thickness;
+            this.UpdatePos();
+            float d = _space.rotation * ((float.Pi * 2) / 360f);
+            norme = new Vector(float.Cos(d + (float.Pi / 2f)), float.Sin(d + (float.Pi / 2f)));
+        }
+
+        public Line Copy()
+        {
+            return new Line(_refSpace, this.thickness, _tag, this._layer)
+            {
+                _point = this._point,
+                _dir = this._dir,
+                PositionOffset = this.PositionOffset
+            };
+        }
+
+        private bool directionLocked;
+        public float LockDirection
+        {
+            set
+            {
+                directionLocked = true;
+                _dir = value * ((float.Pi * 2) / 360f);
+                norme = new Vector(float.Cos(_dir + (float.Pi / 2f)), float.Sin(_dir + (float.Pi / 2f)));
+            }
+        }
+
+        public float Thickness
+        {
+            get => thickness;
+            set => thickness = value;
+        }
+
+        private protected override void UpdatePos()
+        {
+            if (!positionLocked)
+            {
+                _point = _refSpace.GetScreenPosition();
+                _point.x += PositionOffset.x;
+                _point.y += -PositionOffset.y;
+            }
+
+            if (!directionLocked)
+            {
+                _dir = _refSpace.rotation * ((float.Pi * 2) / 360f);
+                norme = new Vector(float.Cos(_dir + (float.Pi / 2f)), float.Sin(_dir + (float.Pi / 2f)));
+            }
+        }
+
+        public bool Check(string tag = "")
+        {
+            this.UpdatePos();
+            foreach (Hitbox col in _hitBoxesList[_layer])
+            {
+                if (col is Circle)
+                {
+                    Circle hit = col as Circle;
+                    hit.UpdatePos();
+
+                    Vector v = new Vector(hit._point.x - _point.x, hit._point.y - _point.y);
+                    if (float.Abs(norme ^ v) < hit.Radius + (thickness / 2f))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public bool CheckWith(Hitbox col)
+        {
+            this.UpdatePos();
+            if (col is Circle)
+            {
+                Circle hit = col as Circle;
+                hit.UpdatePos();
+
+                Vector v = new Vector(hit._point.x - _point.x, hit._point.y - _point.y);
+                return float.Abs(norme ^ v) < hit.Radius;
+            }
+
+            return false;
+        }
+
+        private float f(float x) => (float.Tan(_dir) * (x - _point.x)) + _point.y;
+        private float g(float y) => (float.Tan((float.Pi / 2f) - _dir) * (y - _point.y)) + _point.x;
+
+        public void Draw()
+        {
+            if (this.Active)
+            {
+                this.UpdatePos();
+                if (float.Cos(_dir) == 0)
+                {
+                    GameManager.Instance.SpriteBatch.DrawLine
+                    (
+                        _point.x, 0,
+                        _point.x, Screen.height,
+                        Hitbox._color[_layer].ToMonogameColor() * (thickness == 0 ? 1 : 0.5f),
+                        thickness: thickness + 1
+                    );
+                }
+                else
+                {
+                    Vector p1;
+                    Vector p2;
+                    if (float.Abs(norme.y) > float.Abs(norme.x))
+                    {
+                        p1 = new Vector(0, f(0));
+                        p2 = new Vector(Screen.widht, f(Screen.widht));
+                    }
+                    else
+                    {
+                        p1 = new Vector(g(0), 0);
+                        p2 = new Vector(g(Screen.height), Screen.height);
+                    }
+
+                    GameManager.Instance.SpriteBatch.DrawLine
+                    (
+                        p1.x, p1.y,
+                        p2.x, p2.y,
+                        Hitbox._color[_layer].ToMonogameColor() * (thickness == 0 ? 1 : 0.5f),
+                        thickness: thickness + 1
+                    );
+                }
+            }
+        }
+    }
+
+    public class Circle : Hitbox, ICollider, IDraw, ICopy<Circle>
+    {
+        private float _radius;
+
+        public float Radius => _radius;
+
+        public Circle(Space _space, string tag = "", byte layer = 0) : base(_space, tag, layer)
+        {
+            this.UpdatePos();
+            radiusLocked = false;
+            _radius = _space.Scale.x / 2f;
+        }
+
+        public Circle Copy()
+        {
+            return new Circle(_refSpace, this._tag, this._layer)
+            {
+                PositionOffset = this.PositionOffset,
+                _point = this._point,
+                _radius = this._radius,
+                positionLocked = this.positionLocked,
+                radiusLocked = this.radiusLocked
+            };
+        }
+
+        private protected override void UpdatePos()
+        {
+            if (!positionLocked)
+            {
+                _point = _refSpace.GetScreenPosition();
+                _point.x += PositionOffset.x;
+                _point.y += -PositionOffset.y;
+            }
+        }
+
+        public bool Check(string tag = null)
+        {
+            this.UpdatePos();
+            foreach (Hitbox col in _hitBoxesList[_layer])
+            {
+                if (col is Circle && col.Active && (tag is null ? true : col._tag == tag) && col != this)
+                {
+                    Circle hit = col as Circle;
+                    hit.UpdatePos();
+
+                    if ((_point | hit._point) < _radius + hit._radius)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public Collision[] AdvancedCheck(
+                string tag = null)
+        {
+            List<Collision> result = new List<Collision>();
+            this.UpdatePos();
+            foreach (Hitbox col in _hitBoxesList[_layer])
+            {
+                if (col is Circle && col.Active && (tag is null ? true : col._tag == tag) && col != this)
+                {
+                    Circle hit = col as Circle;
+                    hit.UpdatePos();
+
+                    if ((_point | hit._point) < _radius + hit._radius)
+                    {
+                        Collision c = new Collision();
+                        c.collider = hit;
+                        c.side = Sides.None;
+                        result.Add(c);
+                    }
+                }
+            }
+
+            return result.ToArray();
+        }
+
+        public bool CheckWith(Hitbox col)
+        {
+            this.UpdatePos();
+            if (col is Circle && col.Active && col != this)
+            {
+                Circle hit = col as Circle;
+                hit.UpdatePos();
+
+                if ((_point | hit._point) < _radius + hit._radius)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool radiusLocked;
+        public float LockRadius
+        {
+            set
+            {
+                radiusLocked = true;
+                _radius = value;
+            }
+        }
+
+        public void Draw()
+        {
+            if (this.Active)
+            {
+                this.UpdatePos();
+                GameManager.Instance.SpriteBatch.DrawCircle
+                (
+                    new CircleF(_point.ToVector2(), _radius),
+                    (int)(float.Sqrt(_radius + 10) * 2),
+                    Hitbox._color[this._layer].ToMonogameColor()
+                );
+            }
+        }
     }
 
     public class Rectangle : Hitbox, ICollider, IDraw, IEnumerable, ICopy<Rectangle>
     {
         private struct RectangleEnum : IEnumerator
         {
-            private readonly Vector _p1, _p2;
+            private readonly Vector _point, _p2;
             private short index;
 
             public RectangleEnum(Vector p1, Vector p2)
             {
-                _p1 = p1;
+                _point = p1;
                 _p2 = p2;
                 index = -1;
             }
@@ -150,8 +414,8 @@ public abstract class Hitbox
                 get
                 {
                     return new Vector(
-                        index % 2 == 0 ? _p1.x : _p2.x,
-                        index < 2 ? _p1.y : _p2.y
+                        index % 2 == 0 ? _point.x : _p2.x,
+                        index < 2 ? _point.y : _p2.y
                         );
                 }
             }
@@ -161,7 +425,7 @@ public abstract class Hitbox
             this.UpdatePos();
         }
 
-        private Vector p1, p2;
+        private Vector p2;
 
         private bool sizeLocked = false;
         private Vector lockSize;
@@ -184,10 +448,6 @@ public abstract class Hitbox
 
         public override Vector LockPosition
         {
-            get
-            {
-                return lockPosition;
-            }
             set
             {
                 positionLocked = true;
@@ -213,39 +473,40 @@ public abstract class Hitbox
                         _refSpace.Scale.y
                         );
                 }
-                lockPosition = new Vector(
-                    value.x + q.x - p.x,
-                    -value.y + q.y - p.y
+                _point = new Vector(
+                    value.x + q.x - p.x + PositionOffset.x,
+                    -value.y + q.y - p.y - PositionOffset.y
                     );
             }
         }
 
-        private void UpdatePos()
+        private protected override void UpdatePos()
         {
-            if (positionLocked)
+            if (!positionLocked)
             {
-                p1 = lockPosition;
-            }
-            else
-            {
-                p1 = _refSpace.GetScreenPosition() - BoundFunc.BoundToVector(
+                _point = _refSpace.GetScreenPosition() - BoundFunc.BoundToVector(
                         _refSpace.CenterPoint, _refSpace.Scale.x, _refSpace.Scale.y);
             }
 
             if (sizeLocked)
             {
-                p2 = lockPosition + lockSize;
+                p2 = new Vector(_point.x + lockSize.x, _point.y + lockSize.y);
             }
             else
             {
-                p2 = new Vector(p1.x + _refSpace.Scale.x, p1.y + _refSpace.Scale.y);
+                p2 = new Vector(_point.x + _refSpace.Scale.x, _point.y + _refSpace.Scale.y);
             }
-            _centerPoint = new Vector((p1.x + p2.x) / 2f, (p1.y + p2.y) / 2f);
+                _centerPoint = new Vector((_point.x + p2.x) / 2f, (_point.y + p2.y) / 2f);
+
+            _point.x += PositionOffset.x;
+            _point.y += -PositionOffset.y;
+            p2.x += PositionOffset.x;
+            p2.y += -PositionOffset.y;
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return new RectangleEnum(p1, p2);
+            return new RectangleEnum(_point, p2);
         }
 
 
@@ -253,18 +514,19 @@ public abstract class Hitbox
         {
             return new Rectangle(_refSpace, _tag, this._layer)
             {
-                p1 = this.p1,
-                p2 = this.p2
+                _point = this._point,
+                p2 = this.p2,
+                PositionOffset = this.PositionOffset
             };
         }
 
         private bool InRange(Vector _1, Vector _2)
         {
-            if ((p1.x > _1.x && p1.x < _2.x) || (p2.x > _1.x && p2.x < _2.x))
+            if ((_point.x > _1.x && _point.x < _2.x) || (p2.x > _1.x && p2.x < _2.x))
             {
-                if (p1.y > _1.y)
+                if (_point.y > _1.y)
                 {
-                    if (p1.y < _2.y)
+                    if (_point.y < _2.y)
                     {
                         return true;
                     }
@@ -274,11 +536,11 @@ public abstract class Hitbox
                     return true;
                 }
             }
-            else if ((p1.y > _1.y && p1.y < _2.y) || (p2.y > _1.y && p2.y < _2.y))
+            else if ((_point.y > _1.y && _point.y < _2.y) || (p2.y > _1.y && p2.y < _2.y))
             {
-                if (p1.x > _1.x)
+                if (_point.x > _1.x)
                 {
-                    if (p1.x < _2.x)
+                    if (_point.x < _2.x)
                     {
                         return true;
                     }
@@ -340,7 +602,7 @@ public abstract class Hitbox
             byte i = 0;
             foreach (Vector p in this)
             {
-                if (PointInRange(p, hit.p1, hit.p2, out float dx, out float dy))
+                if (PointInRange(p, hit._point, hit.p2, out float dx, out float dy))
                 {
                     bools[i] = true;
                     global[i] = true;
@@ -359,7 +621,7 @@ public abstract class Hitbox
             i = 0;
             foreach (Vector p in hit)
             {
-                if (PointInRange(p, p1, p2))
+                if (PointInRange(p, _point, p2))
                 {
                     bools[3 - i] = true;
                     global[3 - i] = true;
@@ -445,7 +707,7 @@ public abstract class Hitbox
             byte i = 0;
             foreach (Vector p in this)
             {
-                if (PointInRange(p, hit.p1, hit.p2, out float dx, out float dy))
+                if (PointInRange(p, hit._point, hit.p2, out float dx, out float dy))
                 {
                     bools[i] = true;
                     colided = true;
@@ -463,7 +725,7 @@ public abstract class Hitbox
             i = 0;
             foreach (Vector p in hit)
             {
-                if (PointInRange(p, p1, p2))
+                if (PointInRange(p, _point, p2))
                 {
                     bools[3 - i] = true;
                     colided = true;
@@ -525,7 +787,7 @@ public abstract class Hitbox
                     Rectangle hit = col as Rectangle;
                     hit.UpdatePos();
 
-                    if (InRange(hit.p1, hit.p2))
+                    if (InRange(hit._point, hit.p2))
                         return true;
                 }
             }
@@ -540,7 +802,7 @@ public abstract class Hitbox
                 this.UpdatePos();
                 Rectangle hit = col as Rectangle;
                 hit.UpdatePos();
-                return InRange(hit.p1, hit.p2);
+                return InRange(hit._point, hit.p2);
             }
             return false;
         }
@@ -614,12 +876,9 @@ public abstract class Hitbox
                 (
                     new Microsoft.Xna.Framework.Rectangle
                     (
-                        (int)p1.x, (int)p1.y, (int)(p2.x - p1.x), (int)(p2.y - p1.y)
+                        (int)_point.x, (int)_point.y, (int)(p2.x - _point.x), (int)(p2.y - _point.y)
                     ),
-                    new Microsoft.Xna.Framework.Color
-                    (
-                        _color[_layer].RGB.R, _color[_layer].RGB.G, _color[_layer].RGB.B
-                    ),
+                    _color[_layer].ToMonogameColor(),
                     1
                 );
             }

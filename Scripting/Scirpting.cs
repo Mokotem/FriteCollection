@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System;
-using Microsoft.Xna.Framework.Input;
 
 namespace FriteCollection.Scripting;
 
@@ -118,18 +117,18 @@ public abstract class Executable : IDisposable
     public virtual void AfterUpdate() { }
 
     public virtual void Draw() { }
-    public virtual void Draw(ref SpriteBatch spriteBatch) { }
+    public virtual void Draw(ref readonly SpriteBatch spriteBatch) { }
 
     public virtual void BeforeDraw() { }
-    public virtual void BeforeDraw(ref SpriteBatch spriteBatch) { }
+    public virtual void BeforeDraw(ref readonly SpriteBatch spriteBatch) { }
 
     public virtual void AfterDraw() { }
-    public virtual void AfterDraw(ref SpriteBatch spriteBatch) { }
+    public virtual void AfterDraw(ref readonly SpriteBatch spriteBatch) { }
 
     public virtual void DrawAdditive() { }
 
     public virtual void DrawUI() { }
-    public virtual void DrawUI(ref SpriteBatch spriteBatch) { }
+    public virtual void DrawUI(ref readonly SpriteBatch spriteBatch) { }
 
     public virtual void Dispose() { }
 

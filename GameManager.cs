@@ -86,39 +86,6 @@ public static class GameManager
     }
 }
 
-/// <summary>
-/// Musique. Les variables 'Music' ne peuvent pas être joué en même temps.
-/// </summary>
-public static class Open
-{
-    /// <summary>
-    /// Ouvrir une texture. (png, jpg,...)
-    /// </summary>
-    public static Texture2D Texture(string path)
-    {
-        return GameManager.Instance.Content.Load<Texture2D>(path);
-    }
-
-    /// <summary>
-    /// Ouvrir une police. (.ttf)
-    /// </summary>
-    public static SpriteFont Font(string path)
-    {
-        return GameManager.Instance.Content.Load<SpriteFont>(path);
-    }
-
-    /// <summary>
-    /// [pas dans Content] Ouvrir une tileMap (.Json)
-    /// </summary>
-    public static Tools.TileMap.OgmoFile OgmoTileMap(string path)
-    {
-        string file;
-        using (StreamReader sr = new StreamReader(AppContext.BaseDirectory + path))
-            file = sr.ReadToEnd();
-        return JsonConvert.DeserializeObject<Tools.TileMap.OgmoFile>(file);
-    }
-}
-
 public static class SaveManager
 {
     private const string foldername = "BallBallGame";

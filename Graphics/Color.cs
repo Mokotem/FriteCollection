@@ -345,7 +345,7 @@ namespace FriteCollection.Graphics
             }
         }
 
-        public Microsoft.Xna.Framework.Color ToMonogameColor()
+        internal Microsoft.Xna.Framework.Color ToMonogameColor()
         {
             return new Microsoft.Xna.Framework.Color(_rgb.R, _rgb.G, _rgb.B);
         }

@@ -48,6 +48,6 @@ public class Random
     public float Next(float maxValue)
     {
         _next();
-        return ((float)Branche * maxValue) / ((float)ulong.MaxValue);
+        return ((float)Branche * maxValue) / (ulong.MaxValue / 100f) / 10f;
     }
 }
