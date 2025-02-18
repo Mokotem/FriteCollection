@@ -280,6 +280,9 @@ public class TileMap : IDisposable
         return result.ToArray();
     }
 
+    /// <summary>
+    /// algo banger que j'ai fais pour éviter la redondance de hitboxes
+    /// </summary>
     private List<Hitbox.Rectangle> MergeHitBoxes(ref Hitbox.Rectangle[,] lst)
     {
         List<Hitbox.Rectangle> result = new List<Hitbox.Rectangle>();

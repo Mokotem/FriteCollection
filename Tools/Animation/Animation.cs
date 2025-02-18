@@ -12,18 +12,19 @@ namespace FriteCollection.Tools.Animation
 
         public Animation(KeyFrame[] frames, float[] durations, float startTime = 0f)
         {
-            if (frames.Length < 1 || frames.Length != durations.Length)
+            if (frames.Length < 1 || durations.Length != frames.Length)
                 throw new System.Exception("Frame count should be the same as durations");
 
             this.frames = frames;
             this.durations = durations;
             this.start = startTime;
-            currentKey = 0;
-            currentDuration = durations[0];
+            currentKey = -1;
+            b = 0f;
+            a = 0f;
         }
 
-        private uint currentKey;
-        private float currentDuration;
+        private int currentKey;
+        private float a, b;
 
         public bool Done => currentKey >= frames.Length;
 
@@ -31,13 +32,24 @@ namespace FriteCollection.Tools.Animation
         {
             if (!Done)
             {
-                float t = timer - start;
-                while (!Done && timer - start > currentDuration)
+                while (currentKey < frames.Length - 1
+                    && timer > start + b)
                 {
+                    a = b;
                     currentKey += 1;
-                    currentDuration += durations[currentKey];
+                    if (durations[currentKey] <= 0)
+                    {
+                        frames[currentKey](0);
+                    }
+                    else
+                    {
+                        b += durations[currentKey];
+                    }
                 }
-                frames[currentKey](t / currentDuration);
+                if (currentKey >= 0)
+                {
+                    frames[currentKey]((timer - a - start) / durations[currentKey]);
+                }
             }
         }
     }
@@ -95,6 +107,14 @@ namespace FriteCollection.Tools.Animation
             return (a * (1 - q)) + (b * q);
         }
 
+        public static float Triangle(float a, float b, float t)
+        {
+            if (t <= 0) return a;
+            if (t >= 1) return a;
+            float q = 1 - (2 *  float.Abs(t - 0.5f));
+            return a * (1 - q) + (b * q);
+        }
+
         public static Color Linear(Color a, Color b, float t)
         {
             if (t <= 0) return a;
@@ -146,6 +166,14 @@ namespace FriteCollection.Tools.Animation
             return (a * (1 - q)) + (b * q);
         }
 
+        public static Color Triangle(Color a, Color b, float t)
+        {
+            if (t <= 0) return a;
+            if (t >= 1) return a;
+            float q = 1 - (2 * float.Abs(t - 0.5f));
+            return a * (1 - q) + (b * q);
+        }
+
         public static Vector Linear(Vector a, Vector b, float t)
         {
             if (t <= 0) return a;
@@ -195,6 +223,14 @@ namespace FriteCollection.Tools.Animation
             float t3 = t2 * t;
             float q = t2 - t3 + t + k * (t3 - (2 * t2) + t);
             return (a * (1 - q)) + (b * q);
+        }
+
+        public static Vector Triangle(Vector a, Vector b, float t)
+        {
+            if (t <= 0) return a;
+            if (t >= 1) return a;
+            float q = 1 - (2 * float.Abs(t - 0.5f));
+            return a * (1 - q) + (b * q);
         }
     }
 }
