@@ -18,13 +18,14 @@ public class Settings
     public int WindowHeight = 600;
     public int GameFixeWidth = 800;
     public int GameFixeHeight = 600;
+    public int ReferenceWidth = 800;
+    public int ReferenceHeight = 600;
     public bool FullScreen = false;
     public bool PixelArtDrawing = false;
     public string WindowName = "";
     public byte UICoef = 1;
     public byte StartScene = 0;
     public byte FPS = 60;
-    public SpriteFont Font;
 }
 
 public static class GameManager
@@ -33,6 +34,12 @@ public static class GameManager
     internal static void SetGameInstance(FriteModel.MonoGame _instance)
     {
         _nstnc = _instance;
+    }
+
+    public static bool FullScreen
+    {
+        get => _nstnc.FullScreen;
+        set => _nstnc.FullScreen = value;
     }
 
     internal static FriteModel.MonoGame Instance => _nstnc;
@@ -53,11 +60,18 @@ public static class GameManager
 
     internal static Settings Settings => _settings;
 
-    public static SpriteFont Font => _settings.Font;
+    private static SpriteFont _font;
+    public static SpriteFont Font => _font;
+
+    public static void SetFont(SpriteFont font)
+    {
+        _font = font;
+    }
 
     public static void SetSettings(Settings settings)
     {
         _settings = settings;
+        _currentScene = settings.StartScene;
     }
 
     public static void Print(params object[] listText)

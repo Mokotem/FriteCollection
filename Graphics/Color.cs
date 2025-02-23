@@ -184,7 +184,7 @@ namespace FriteCollection.Graphics
         private HSV _hsv = new(0, 0, 0);
         private bool _lastEditIsRGB = true;  // c'est pour éviter de recalculer
 
-        public static readonly Color White = new Color(1, 1, 1);
+        public static readonly Color White = new Color(255, 255, 255);
         public static readonly Color Black = new Color(0, 0, 0);
 
         /// <summary>
@@ -251,9 +251,12 @@ namespace FriteCollection.Graphics
         /// </summary>
         public Color(float r, float g, float b)
         {
-            _rgb.R = r;
-            _rgb.G = g;
-            _rgb.B = b;
+            _rgb = new RGB(r, g, b);
+        }
+
+        public Color(byte r, byte g, byte b)
+        {
+            _rgb = new RGB(r, g, b);
         }
 
         /// <summary>

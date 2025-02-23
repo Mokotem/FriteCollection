@@ -19,6 +19,7 @@ public class MonoGame : Game
     private bool changingScene = false;
     private Settings S => GameManager.Settings;
     private readonly Type[] _childTypes;
+    private SamplerState drawstate;
 
     public MonoGame(Type[] childTypes)
     {
@@ -30,7 +31,7 @@ public class MonoGame : Game
         GameManager.SetGameInstance(this);
     }
 
-    internal float _timer = 0f, _delta = 0f, _targetTimer = 0f;
+    internal double _timer = 0d, _delta = 0d, _targetTimer = 0d;
 
     private static Texture2D CreateTexture(GraphicsDevice device, int w, int h, Color color)
     {
@@ -69,6 +70,8 @@ public class MonoGame : Game
         base.Initialize();
 
         GameManager.Fps = GameManager.Settings.FPS;
+        drawstate = S.PixelArtDrawing ? SamplerState.PointClamp : SamplerState.LinearClamp;
+
         UpdateScriptToScene();
     }
 
@@ -111,32 +114,27 @@ public class MonoGame : Game
 
         Time.SpaceTime = 1f;
 
-        foreach (Executable script in CurrentExecutables.Copy())
+        foreach (Executable script in CurrentExecutables.ToArray())
         {
-            script.BeforeStart();
+            script.Load();
         }
 
-        foreach (Executable script in CurrentExecutables.Copy())
+        foreach (Executable script in CurrentExecutables.ToArray())
         {
             script.Start();
         }
 
-        foreach (Executable script in CurrentExecutables.Copy())
-        {
-            script.AfterStart();
-        }
-
-        foreach (Executable script in CurrentExecutables.Copy())
+        foreach (Executable script in CurrentExecutables.ToArray())
         {
             script.BeforeUpdate();
         }
 
-        foreach (Executable script in CurrentExecutables.Copy())
+        foreach (Executable script in CurrentExecutables.ToArray())
         {
             script.Update();
         }
 
-        foreach (Executable script in CurrentExecutables.Copy())
+        foreach (Executable script in CurrentExecutables.ToArray())
         {
             script.AfterUpdate();
         }
@@ -205,9 +203,9 @@ public class MonoGame : Game
 
     protected override void Update(GameTime gameTime)
     {
-        _timer += (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000f;
-        _targetTimer += 1f / GameManager.Fps;
-        _delta = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000f;
+        _timer += gameTime.ElapsedGameTime.TotalMilliseconds / 1000d;
+        _targetTimer += 1d / GameManager.Fps;
+        _delta = gameTime.ElapsedGameTime.TotalMilliseconds / 1000d;
 
         MouseState mstate = Mouse.GetState();
         FriteCollection.Point v = new(
@@ -233,7 +231,6 @@ public class MonoGame : Game
                 foreach (Executable script in CurrentExecutables.Copy())
                 {
                     script.BeforeUpdate();
-                    if (changingScene) break;
                 }
             }
             if (!changingScene)
@@ -241,18 +238,13 @@ public class MonoGame : Game
                 foreach (Executable script in CurrentExecutables.Copy())
                 {
                     script.Update();
-                    if (changingScene) break;
                 }
             }
             if (!changingScene)
             {
                 foreach (FriteCollection.UI.ButtonCore but in buttons)
                 {
-                    if (!changingScene)
-                    {
-                        but.Update();
-                    }
-                    else break;
+                    but.Update();
                 }
             }
             if (!changingScene)
@@ -260,7 +252,6 @@ public class MonoGame : Game
                 foreach (Executable script in CurrentExecutables.Copy())
                 {
                     script.AfterUpdate();
-                    if (changingScene) break;
                 }
             }
         }
@@ -277,38 +268,23 @@ public class MonoGame : Game
         GraphicsDevice.SetRenderTarget(renderTarget);
         GraphicsDevice.Clear(
             new Color(Screen.backGround.RGB.R, Screen.backGround.RGB.G, Screen.backGround.RGB.B));
-        SpriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);
-        foreach (Executable script in CurrentExecutables)
-        {
-            script.BeforeDraw();
-        }
+        SpriteBatch.Begin(
+            blendState: BlendState.AlphaBlend,
+            samplerState: drawstate,
+            sortMode: SpriteSortMode.BackToFront
+            );
         foreach (Executable script in CurrentExecutables)
         {
             script.Draw();
         }
-        foreach (Executable script in CurrentExecutables)
-        {
-            script.AfterDraw();
-        }
         SpriteBatch.End();
 
-        if (SpriteBatch.IsDisposed == false)
+        foreach (Executable script in CurrentExecutables)
         {
-            foreach (Executable script in CurrentExecutables)
-            {
-                script.BeforeDraw(ref SpriteBatch);
-            }
-            foreach (Executable script in CurrentExecutables)
-            {
-                script.Draw(ref SpriteBatch);
-            }
-            foreach (Executable script in CurrentExecutables)
-            {
-                script.AfterDraw(ref SpriteBatch);
-            }
+            script.Draw(ref SpriteBatch);
         }
 
-        SpriteBatch.Begin(blendState: BlendState.Additive, samplerState: SamplerState.PointClamp);
+        SpriteBatch.Begin(blendState: BlendState.Additive, samplerState: drawstate);
         foreach (Executable script in CurrentExecutables)
         {
             if (!changingScene)
@@ -321,14 +297,14 @@ public class MonoGame : Game
         GraphicsDevice.SetRenderTarget(renderTargetUI);
 
         GraphicsDevice.Clear(Color.Black);
-        SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        SpriteBatch.Begin(samplerState: drawstate);
         SpriteBatch.Draw(
             renderTarget,
             new Rectangle(0, 0, renderTarget.Width, renderTarget.Height),
             Color.White);
 
         SpriteBatch.End();
-        SpriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);
+        SpriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: drawstate);
         foreach (Executable script in CurrentExecutables)
         {
             script.DrawUI();
@@ -338,7 +314,7 @@ public class MonoGame : Game
         GraphicsDevice.SetRenderTarget(null);
         GraphicsDevice.Clear(Color.Black);
 
-        SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        SpriteBatch.Begin(samplerState: drawstate);
         SpriteBatch.Draw(renderTargetUI, targetGameRectangle, Color.White);
         SpriteBatch.End();
 

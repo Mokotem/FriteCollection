@@ -174,11 +174,11 @@ public abstract class UI : IDisposable
 public abstract class ButtonCore : UI
 {
     private Text titleText;
-    private FriteModel.MonoGame instance => GameManager.Instance;
+    private FriteModel.MonoGame I => GameManager.Instance;
 
     private bool clic => GameManager.Instance.IsActive && _active && Input.Mouse.Sate.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed
-&& IsInRange(instance.mouseClickedPosition)
-&& IsInRange(instance.mousePosition)
+&& IsInRange(I.mouseClickedPosition)
+&& IsInRange(I.mousePosition)
 && Time.TargetTimer >= 0.2f;
 
     private bool IsInRange(Point pos) =>
@@ -193,7 +193,7 @@ public abstract class ButtonCore : UI
 
     public override void Dispose()
     {
-        instance.buttons.Remove(this);
+        I.buttons.Remove(this);
         _fonction = null;
         papa.Dispose();
         if (titleText is not null)
@@ -206,7 +206,7 @@ public abstract class ButtonCore : UI
     {
         if (_active)
         {
-            selected = IsInRange(instance.mousePosition);
+            selected = IsInRange(I.mousePosition);
 
             if (clic)
             {
@@ -220,9 +220,9 @@ public abstract class ButtonCore : UI
                 if (titleText is not null)
                     titleText.Color = Graphics.Color.White;
 
-                if (previousClic == true && _fonction is not null && IsInRange(instance.mousePosition))
+                if (previousClic == true && _fonction is not null && IsInRange(I.mousePosition))
                 {
-                    instance.previousMouseLeft = false;
+                    I.previousMouseLeft = false;
                     _fonction();
                 }
             }
@@ -259,20 +259,20 @@ public abstract class ButtonCore : UI
     public ButtonCore(TileSet tileset, Rectangle space, UI parent)
     {
         papa = new Panel(tileset, space, parent);
-        instance.buttons.Add(this);
+        I.buttons.Add(this);
     }
 
 
     public ButtonCore(TileSet tileset, Rectangle space)
     {
         papa = new Panel(tileset, space);
-        instance.buttons.Add(this);
+        I.buttons.Add(this);
     }
 
     public ButtonCore(Texture2D image, Rectangle space, UI parent)
     {
         papa = new Image(image, space, parent);
-        instance.buttons.Add(this);
+        I.buttons.Add(this);
     }
 
     public ButtonCore(string title, TileSet tileset, Rectangle space, UI parent)
@@ -280,7 +280,7 @@ public abstract class ButtonCore : UI
         papa = new Panel(tileset, space, parent);
         titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
         papa.Add(titleText);
-        instance.buttons.Add(this);
+        I.buttons.Add(this);
     }
 
     public ButtonCore(string title, Texture2D image, Rectangle space, UI parent)
@@ -288,13 +288,13 @@ public abstract class ButtonCore : UI
         papa = new Image(image, space, parent);
         titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
         papa.Add(titleText);
-        instance.buttons.Add(this);
+        I.buttons.Add(this);
     }
 
     public ButtonCore(Texture2D image, Rectangle space)
     {
         papa = new Image(image, space);
-        instance.buttons.Add(this);
+        I.buttons.Add(this);
     }
 
     public ButtonCore(string title, TileSet tileset, Rectangle space)
@@ -302,7 +302,7 @@ public abstract class ButtonCore : UI
         papa = new Panel(tileset, space);
         titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
         papa.Add(titleText);
-        instance.buttons.Add(this);
+        I.buttons.Add(this);
     }
 
     public ButtonCore(string title, Texture2D image, Rectangle space)
@@ -310,7 +310,7 @@ public abstract class ButtonCore : UI
         papa = new Image(image, space);
         titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
         papa.Add(titleText);
-        instance.buttons.Add(this);
+        I.buttons.Add(this);
     }
 }
 
@@ -469,6 +469,7 @@ public class Text : UI
 {
     private Microsoft.Xna.Framework.Rectangle par;
     private string text;
+    public bool Outline;
 
     public string EditText
     {
@@ -507,7 +508,7 @@ public class Text : UI
         text = "";
         string[] txt = input.Split(" ");
         int i = 0;
-        if (txt.Length < 2)
+        if (txt.Length < 2 || rect.Width < 2)
         {
             text = input;
         }
@@ -537,6 +538,7 @@ public class Text : UI
         ApplyText(txt);
         base.ApplyPosition(Screen);
         par = Screen;
+        Outline = false;
     }
 
     public Text(string txt, Rectangle space, UI parent)
@@ -546,30 +548,34 @@ public class Text : UI
         ApplyText(txt);
         base.ApplyPosition(parent.Rectangle);
         par = parent.Rectangle;
+        Outline = false;
     }
 
     public override void Draw()
     {
         if (_active)
         {
-            foreach (Vector2 r in new Vector2[8]
+            if (Outline)
             {
-                new(-2, 2),
-                new(0, 2),
-                new(2, 2),
+                foreach (Vector2 r in new Vector2[8]
+                {
+                new(-1, 1),
+                new(0, 1),
+                new(1, 1),
 
-                new(-2, 0),
-                new(2, 0),
+                new(-1, 0),
+                new(1, 0),
 
-                new(-2, -2),
-                new(0, -2),
-                new(2, -2)
-            })
-            {
-                GameManager.Instance.SpriteBatch.DrawString
-                (GameManager.Font, text, new Vector2(rect.X + r.X , rect.Y + r.Y),
-                Microsoft.Xna.Framework.Color.Black, 0, Vector2.Zero, 1f,
-                SpriteEffects.None, 0);
+                new(-1, -1),
+                new(0, -1),
+                new(1, -1)
+                })
+                {
+                    GameManager.Instance.SpriteBatch.DrawString
+                    (GameManager.Font, text, new Vector2(rect.X + r.X, rect.Y + r.Y),
+                    Microsoft.Xna.Framework.Color.Black, 0, Vector2.Zero, 1f,
+                    SpriteEffects.None, 0);
+                }
             }
             GameManager.Instance.SpriteBatch.DrawString
                 (GameManager.Font, text, new Vector2(rect.X, rect.Y),

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Linq;
 
 namespace FriteCollection.Scripting;
 
@@ -83,34 +84,24 @@ public static class Time
     /// <summary>
     /// Temps écoulé visé depuis l'execution.
     /// </summary>
-    public static float TargetTimer
-    {
-        get { return GameManager.Instance._targetTimer; }
-    }
+    public static double TargetTimer => GameManager.Instance._targetTimer;
 
     /// <summary>
     /// Temps écoulé depuis l'execution.
     /// </summary>
-    public static float Timer
-    {
-        get { return GameManager.Instance._timer; }
-    }
+    public static double Timer => GameManager.Instance._timer; 
 
     /// <summary>
     /// Temps écoulé depuis la dernière frame.
     /// </summary>
-    public static float Delta
-    {
-        get { return GameManager.Instance._delta; }
-    }
+    public static double Delta => GameManager.Instance._delta * _sp;
+    public static float DeltaF => (float)GameManager.Instance._delta * _sp;
 }
 
 public abstract class Executable : IDisposable
 {
     public virtual bool Active { get; }
-    public virtual void BeforeStart() { }
     public virtual void Start() { }
-    public virtual void AfterStart() { }
 
     public virtual void BeforeUpdate() { }
     public virtual void Update() { }
@@ -119,18 +110,13 @@ public abstract class Executable : IDisposable
     public virtual void Draw() { }
     public virtual void Draw(ref readonly SpriteBatch spriteBatch) { }
 
-    public virtual void BeforeDraw() { }
-    public virtual void BeforeDraw(ref readonly SpriteBatch spriteBatch) { }
-
-    public virtual void AfterDraw() { }
-    public virtual void AfterDraw(ref readonly SpriteBatch spriteBatch) { }
-
     public virtual void DrawAdditive() { }
 
     public virtual void DrawUI() { }
     public virtual void DrawUI(ref readonly SpriteBatch spriteBatch) { }
 
     public virtual void Dispose() { }
+    public virtual void Load() { }
 
 
     private short layer = 0;
@@ -193,6 +179,22 @@ public abstract class Clone : Executable
     private readonly ulong _id;
     private bool isdestroyed = false;
 
+    public static void DestroyAll(params Type[] exepts)
+    {
+        foreach(Executable exe in GameManager.Instance.CurrentExecutables.Copy())
+        {
+            if (exe is Clone && !(exepts.Contains(exe.GetType().BaseType) || exepts.Contains(exe.GetType())))
+            {
+                (exe as Clone).Destroy();
+            }
+        }
+    }
+
+    protected virtual void OnDestroy()
+    {
+
+    }
+
     public override bool Active => true;
 
     public bool IsDestroyed => isdestroyed;
@@ -218,6 +220,8 @@ public abstract class Clone : Executable
 
     public void Destroy()
     {
+        this.OnDestroy();
+        this.Dispose();
         GameManager.Instance.CurrentExecutables.Remove(this);
         isdestroyed = true;
     }

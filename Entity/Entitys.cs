@@ -14,13 +14,8 @@ namespace FriteCollection.Entity
 
         private protected Color GetEntColor()
         {
-            return new Color
-            (
-                Renderer.Color.RGB.R * Renderer.Alpha,
-                Renderer.Color.RGB.G * Renderer.Alpha,
-                Renderer.Color.RGB.B * Renderer.Alpha,
-                Renderer.Alpha
-            );
+            return
+            (Renderer.Color * ((Renderer.Alpha + 1) / 2f) + (new Graphics.Color(1, 0, 0) * (1 - (Renderer.Alpha / 2f)))).ToMonogameColor() * Renderer.Alpha;
         }
     }
 
@@ -43,13 +38,8 @@ namespace FriteCollection.Entity
             if (Renderer.hide == false)
             {
                 Vector entPosi = Space.GetScreenPosition();
-                Vector s = Space.Copy().Scale;
+                Vector s = Space.Scale;
                 float flipFactor = 0f;
-
-                if (Space.GridOrigin == Camera.GridOrigin)
-                {
-                    s *= Camera.zoom;
-                }
 
                 SpriteEffects spriteEffect = SpriteEffects.None;
                 if (s.x < 0 && s.y < 0)
@@ -83,11 +73,11 @@ namespace FriteCollection.Entity
                             (int)MathF.Abs(s.y)
                         ),
                         null,
-                        Color.Black,
-                        Space.rotation * (MathF.PI / 180f) + flipFactor,
+                        Color.Black * Renderer.Alpha,
+                        float.DegreesToRadians(Space.rotation) + flipFactor,
                         Renderer.GetTextureBounds()[(int)Space.CenterPoint].ToVector2(),
                         SpriteEffects.None,
-                        0
+                        2f
                     );
                 }
 
@@ -103,10 +93,10 @@ namespace FriteCollection.Entity
                     ),
                     null,
                     base.GetEntColor(),
-                    Space.rotation * (MathF.PI / 180f) + flipFactor,
+                    float.DegreesToRadians(Space.rotation) + flipFactor,
                     Renderer.GetTextureBounds()[(int)Space.CenterPoint].ToVector2(),
                     spriteEffect,
-                    0
+                    Renderer.GetLayer()
                 );
             }
         }

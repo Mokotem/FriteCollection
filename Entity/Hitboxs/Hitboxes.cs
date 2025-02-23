@@ -132,7 +132,7 @@ public abstract class Hitbox
         {
             this.thickness = thickness;
             this.UpdatePos();
-            float d = _space.rotation * ((float.Pi * 2) / 360f);
+            float d = _space.rotation * (float.Pi / 180f);
             norme = new Vector(float.Cos(d + (float.Pi / 2f)), float.Sin(d + (float.Pi / 2f)));
         }
 
@@ -152,10 +152,13 @@ public abstract class Hitbox
             set
             {
                 directionLocked = true;
-                _dir = value * ((float.Pi * 2) / 360f);
-                norme = new Vector(float.Cos(_dir + (float.Pi / 2f)), float.Sin(_dir + (float.Pi / 2f)));
+                _dir = value * (float.Pi / 180f);
+                norme = new Vector(float.Cos(_dir + (float.Pi / 2f)),
+                    float.Sin(_dir + (float.Pi / 2f)));
             }
         }
+
+        public Vector Norme => norme;
 
         public float Thickness
         {
@@ -174,8 +177,9 @@ public abstract class Hitbox
 
             if (!directionLocked)
             {
-                _dir = _refSpace.rotation * ((float.Pi * 2) / 360f);
-                norme = new Vector(float.Cos(_dir + (float.Pi / 2f)), float.Sin(_dir + (float.Pi / 2f)));
+                _dir = _refSpace.rotation * (float.Pi / 180f);
+                norme = new Vector(float.Cos(_dir + (float.Pi / 2f)),
+                    float.Sin(_dir + (float.Pi / 2f)));
             }
         }
 
@@ -229,7 +233,7 @@ public abstract class Hitbox
                     (
                         _point.x, 0,
                         _point.x, Screen.height,
-                        Hitbox._color[_layer].ToMonogameColor() * (thickness == 0 ? 1 : 0.5f),
+                        Hitbox._color[_layer].ToMonogameColor() * (thickness == 0 ? 1 : 0.2f),
                         thickness: thickness + 1
                     );
                 }
@@ -252,7 +256,7 @@ public abstract class Hitbox
                     (
                         p1.x, p1.y,
                         p2.x, p2.y,
-                        Hitbox._color[_layer].ToMonogameColor() * (thickness == 0 ? 1 : 0.5f),
+                        Hitbox._color[_layer].ToMonogameColor() * (thickness == 0 ? 1 : 0.2f),
                         thickness: thickness + 1
                     );
                 }
@@ -300,14 +304,28 @@ public abstract class Hitbox
             this.UpdatePos();
             foreach (Hitbox col in _hitBoxesList[_layer])
             {
-                if (col is Circle && col.Active && (tag is null ? true : col._tag == tag) && col != this)
+                if ((col is Circle || col is Line) && col.Active && (tag is null ? true : col._tag == tag) && col != this)
                 {
-                    Circle hit = col as Circle;
-                    hit.UpdatePos();
-
-                    if ((_point | hit._point) < _radius + hit._radius)
+                    if (col is Circle)
                     {
-                        return true;
+                        Circle hit = col as Circle;
+                        hit.UpdatePos();
+
+                        if ((_point | hit._point) < _radius + hit._radius)
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        Line hit = col as Line;
+                        hit.UpdatePos();
+
+                        Vector v = new Vector(_point.x - hit._point.x, _point.y - hit._point.y);
+                        if (float.Abs(hit.Norme ^ v) < Radius + (hit.Thickness / 2f))
+                        {
+                            return true;
+                        }
                     }
                 }
             }
@@ -343,12 +361,23 @@ public abstract class Hitbox
         public bool CheckWith(Hitbox col)
         {
             this.UpdatePos();
-            if (col is Circle && col.Active && col != this)
+            if (col is Circle)
             {
                 Circle hit = col as Circle;
                 hit.UpdatePos();
 
                 if ((_point | hit._point) < _radius + hit._radius)
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                Line hit = col as Line;
+                hit.UpdatePos();
+
+                Vector v = new Vector(_point.x - hit._point.x, _point.y - hit._point.y);
+                if (float.Abs(hit.Norme ^ v) < Radius + (hit.Thickness / 2f))
                 {
                     return true;
                 }
@@ -484,8 +513,16 @@ public abstract class Hitbox
         {
             if (!positionLocked)
             {
-                _point = _refSpace.GetScreenPosition() - BoundFunc.BoundToVector(
-                        _refSpace.CenterPoint, _refSpace.Scale.x, _refSpace.Scale.y);
+                if (sizeLocked)
+                {
+                    _point = _refSpace.GetScreenPosition() - BoundFunc.BoundToVector(
+                    _refSpace.CenterPoint, lockSize.x, lockSize.y);
+                }
+                else
+                {
+                    _point = _refSpace.GetScreenPosition() - BoundFunc.BoundToVector(
+                    _refSpace.CenterPoint, _refSpace.Scale.x, _refSpace.Scale.y);
+                }
             }
 
             if (sizeLocked)

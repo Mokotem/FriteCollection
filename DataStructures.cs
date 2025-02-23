@@ -592,12 +592,10 @@ namespace FriteCollection
         /// <remarks>exemple: (1, 1) => 1,414</remarks>
         public float Lenght => float.Sqrt((x * x) + (y * y));
 
-        private static readonly Vector _zero = new Vector(0, 0);
-
         /// <summary>
         /// (0, 0)
         /// </summary>
-        public static Vector Zero => _zero;
+        public static Vector Zero => new Vector(0, 0);
 
         /// <summary>
         /// (x, y)
@@ -606,6 +604,12 @@ namespace FriteCollection
         {
             this.x = x;
             this.y = y;
+        }
+
+        public Vector(float s)
+        {
+            this.x = s;
+            this.y = s;
         }
 
         /// <summary>
@@ -676,6 +680,12 @@ namespace FriteCollection
         {
             this.i = i;
             this.j = j;
+        }
+
+        public Point(int s)
+        {
+            this.i = s;
+            this.j = s;
         }
 
         /// <summary>

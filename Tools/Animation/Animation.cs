@@ -27,16 +27,17 @@ namespace FriteCollection.Tools.Animation
         private float a, b;
 
         public bool Done => currentKey >= frames.Length;
+        public int CurrentFrame => currentKey;
 
         public void Animate(float timer)
         {
-            if (!Done)
+            while (currentKey < frames.Length
+                && timer > start + b)
             {
-                while (currentKey < frames.Length - 1
-                    && timer > start + b)
+                a = b;
+                currentKey += 1;
+                if (!Done)
                 {
-                    a = b;
-                    currentKey += 1;
                     if (durations[currentKey] <= 0)
                     {
                         frames[currentKey](0);
@@ -46,16 +47,20 @@ namespace FriteCollection.Tools.Animation
                         b += durations[currentKey];
                     }
                 }
-                if (currentKey >= 0)
-                {
-                    frames[currentKey]((timer - a - start) / durations[currentKey]);
-                }
+            }
+            if (!Done && currentKey >= 0)
+            {
+                frames[currentKey]((timer - a - start) / durations[currentKey]);
             }
         }
     }
 
     public static class Interpolation
     {
+        public delegate float MoveFloat(float a, float b, float t);
+        public delegate Color MoveColor(Color a, Color b, float t);
+        public delegate Vector MoveVector(Vector a, Vector b, float t);
+
         public static float Linear(float a, float b, float t)
         {
             if (t <= 0) return a;
