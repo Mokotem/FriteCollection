@@ -6,6 +6,7 @@ using FriteCollection.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 
 namespace FriteModel;
 
@@ -80,15 +81,16 @@ public class MonoGame : Game
         GameManager.SetGameInstance(this);
 
         changingScene = true;
-        FriteCollection.Entity.Hitboxs.Hitbox.ClearHitboxes(); 
-
+        FriteCollection.Entity.Hitboxs.Hitbox.ClearHitboxes();
+        MediaPlayer.Stop();
         buttons.Clear();
 
         foreach (Executable exe in CurrentExecutables)
         {
             if (exe is Clone)
                 (exe as Clone).Destroy();
-            exe.Dispose();
+            else
+                exe.Dispose();
         }
 
         CurrentExecutables.Clear();
@@ -101,15 +103,12 @@ public class MonoGame : Game
 
         foreach (Type type in _childTypes)
         {
-            if (type.IsSubclassOf(typeof(Script)))
+            Script instance = (Script)Activator.CreateInstance(type);
+            if (instance.AttributedScenes == GameManager.CurrentScene && instance.Active)
             {
-                Script instance = (Script)Activator.CreateInstance(type);
-                if (instance.AttributedScenes == GameManager.CurrentScene)
-                {
-                    CurrentExecutables.Add(instance);
-                }
-                else instance = null;
+                CurrentExecutables.Add(instance);
             }
+            else instance = null;
         }
 
         Time.SpaceTime = 1f;
@@ -226,33 +225,22 @@ public class MonoGame : Game
 
         if (!changingScene)
         {
-            if (!changingScene)
+            foreach (Executable script in CurrentExecutables.Copy())
             {
-                foreach (Executable script in CurrentExecutables.Copy())
-                {
-                    script.BeforeUpdate();
-                }
+                script.BeforeUpdate();
             }
-            if (!changingScene)
+            foreach (Executable script in CurrentExecutables.Copy())
             {
-                foreach (Executable script in CurrentExecutables.Copy())
-                {
+                if (!changingScene)
                     script.Update();
-                }
             }
-            if (!changingScene)
+            foreach (FriteCollection.UI.ButtonCore but in buttons)
             {
-                foreach (FriteCollection.UI.ButtonCore but in buttons)
-                {
-                    but.Update();
-                }
+                but.Update();
             }
-            if (!changingScene)
+            foreach (Executable script in CurrentExecutables.Copy())
             {
-                foreach (Executable script in CurrentExecutables.Copy())
-                {
-                    script.AfterUpdate();
-                }
+                script.AfterUpdate();
             }
         }
 
@@ -268,49 +256,55 @@ public class MonoGame : Game
         GraphicsDevice.SetRenderTarget(renderTarget);
         GraphicsDevice.Clear(
             new Color(Screen.backGround.RGB.R, Screen.backGround.RGB.G, Screen.backGround.RGB.B));
-        SpriteBatch.Begin(
-            blendState: BlendState.AlphaBlend,
-            samplerState: drawstate,
-            sortMode: SpriteSortMode.BackToFront
-            );
-        foreach (Executable script in CurrentExecutables)
-        {
-            script.Draw();
-        }
-        SpriteBatch.End();
 
-        foreach (Executable script in CurrentExecutables)
+        if (!changingScene)
         {
-            script.Draw(ref SpriteBatch);
-        }
+            foreach (Executable script in CurrentExecutables)
+            {
+                script.BeforeDraw(ref SpriteBatch);
+            }
 
-        SpriteBatch.Begin(blendState: BlendState.Additive, samplerState: drawstate);
-        foreach (Executable script in CurrentExecutables)
-        {
-            if (!changingScene)
+            SpriteBatch.Begin(
+                blendState: BlendState.AlphaBlend,
+                samplerState: drawstate,
+                sortMode: SpriteSortMode.BackToFront
+                );
+            foreach (Executable script in CurrentExecutables)
+            {
+                script.Draw();
+            }
+            SpriteBatch.End();
+
+            foreach (Executable script in CurrentExecutables)
+            {
+                script.AfterDraw(ref SpriteBatch);
+            }
+
+            SpriteBatch.Begin(blendState: BlendState.Additive, samplerState: SamplerState.PointClamp);
+            foreach (Executable script in CurrentExecutables)
             {
                 script.DrawAdditive();
             }
+            SpriteBatch.End();
+
+            GraphicsDevice.SetRenderTarget(renderTargetUI);
+
+            GraphicsDevice.Clear(Color.Black);
+            SpriteBatch.Begin(samplerState: drawstate);
+            SpriteBatch.Draw(
+                renderTarget,
+                new Rectangle(0, 0, renderTarget.Width, renderTarget.Height),
+                Color.White);
+
+            SpriteBatch.End();
+            SpriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);
+            foreach (Executable script in CurrentExecutables)
+            {
+                script.DrawUI();
+            }
+            SpriteBatch.End();
+
         }
-        SpriteBatch.End();
-
-        GraphicsDevice.SetRenderTarget(renderTargetUI);
-
-        GraphicsDevice.Clear(Color.Black);
-        SpriteBatch.Begin(samplerState: drawstate);
-        SpriteBatch.Draw(
-            renderTarget,
-            new Rectangle(0, 0, renderTarget.Width, renderTarget.Height),
-            Color.White);
-
-        SpriteBatch.End();
-        SpriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: drawstate);
-        foreach (Executable script in CurrentExecutables)
-        {
-            script.DrawUI();
-        }
-        SpriteBatch.End();
-
         GraphicsDevice.SetRenderTarget(null);
         GraphicsDevice.Clear(Color.Black);
 

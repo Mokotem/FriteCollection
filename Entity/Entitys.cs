@@ -77,7 +77,7 @@ namespace FriteCollection.Entity
                         float.DegreesToRadians(Space.rotation) + flipFactor,
                         Renderer.GetTextureBounds()[(int)Space.CenterPoint].ToVector2(),
                         SpriteEffects.None,
-                        2f
+                        0.75f
                     );
                 }
 

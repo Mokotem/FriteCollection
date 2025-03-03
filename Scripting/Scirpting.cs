@@ -1,8 +1,80 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using FriteCollection.Entity;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace FriteCollection.Scripting;
+
+public static class Input
+{
+    private static KeyboardState _kbstate, _prekbstate;
+    private static MouseState _mouseState;
+
+    public static KeyboardState KB => _kbstate;
+    public static KeyboardState KBP => _prekbstate;
+
+    public static class Mouse
+    {
+        public static MouseState Sate => _mouseState;
+
+        private static Bounds _origin = Bounds.Center;
+        public static Bounds GridOrigin
+        {
+            get => _origin;
+            set
+            {
+                _origin = value;
+            }
+        }
+
+        public static Vector Position
+        {
+            get
+            {
+                Vector v = BoundFunc.BoundToVector(_origin, Screen.widht, Screen.height);
+                return new Vector(_mouseState.Position.X - v.x, -_mouseState.Position.Y + v.y);
+            }
+        }
+    }
+
+    internal static void SetStates(KeyboardState kbs, MouseState mss)
+    {
+        _prekbstate = _kbstate;
+        _kbstate = kbs;
+        _mouseState = mss;
+    }
+}
+
+public class Sequence : Clone
+{
+    public delegate float Task();
+    private readonly Task[] _tasks;
+    public Sequence(params Task[] tasks)
+    {
+        _tasks = tasks;
+    }
+
+    float timer = -1;
+    uint i = 0;
+
+    public override void BeforeUpdate()
+    {
+        if (i < _tasks.Length)
+        {
+            if (timer < 0)
+            {
+                timer = _tasks[i]();
+                i++;
+            }
+            else
+                timer += -Time.FixedFrameTime;
+        }
+        else
+            Destroy();
+    }
+}
 
 public struct GameSettings
 {
@@ -107,8 +179,9 @@ public abstract class Executable : IDisposable
     public virtual void Update() { }
     public virtual void AfterUpdate() { }
 
+    public virtual void BeforeDraw(ref readonly SpriteBatch spriteBatch) { }
     public virtual void Draw() { }
-    public virtual void Draw(ref readonly SpriteBatch spriteBatch) { }
+    public virtual void AfterDraw(ref readonly SpriteBatch spriteBatch) { }
 
     public virtual void DrawAdditive() { }
 
@@ -160,9 +233,18 @@ public abstract class Script : Executable
     public Script(object scene, bool active = true)
     {
         _attributedScenes = (int)scene;
+        _active = active;
     }
-    public override bool Active => true;
+
+    private readonly bool _active;
+    public override bool Active => _active;
     private int _attributedScenes;
+
+    public void Destroy()
+    {
+        this.Dispose();
+        GameManager.Instance.CurrentExecutables.Remove(this);
+    }
 
     internal int AttributedScenes
     {

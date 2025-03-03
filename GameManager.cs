@@ -36,6 +36,12 @@ public static class GameManager
         _nstnc = _instance;
     }
 
+    public static void Quit()
+    {
+        _nstnc.Exit();
+    }
+
+
     public static bool FullScreen
     {
         get => _nstnc.FullScreen;

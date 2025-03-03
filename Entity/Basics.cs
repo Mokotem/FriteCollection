@@ -5,14 +5,6 @@ using System;
 
 namespace FriteCollection.Entity;
 
-interface IDraw
-{
-    /// <summary>
-    /// Dessine l'entité à l'écran.
-    /// </summary>
-    public void Draw();
-}
-
 interface ICopy<T>
 {
     /// <summary>
@@ -165,19 +157,21 @@ public class Renderer : ICopy<Renderer>
     public static Texture2D DefaultTexture => _defaultTexture;
     private byte _a = 255;
 
-    private float layer = 0f;
+    private float layer;
     internal float GetLayer() => layer;
 
     public short Layer
     {
         get
         {
-            return (short)((layer * ushort.MaxValue) - short.MaxValue);
+            return (short)((layer * 2000) - 1000);
         }
 
         set
         {
-            layer = (value + short.MaxValue) / (float)ushort.MaxValue;
+            if (value > 1000) throw new ArgumentOutOfRangeException("value cannot be greater than 1000");
+            if (value < -1000) throw new ArgumentOutOfRangeException("value cannot be less than -1000");
+            layer = (value + 1000f) / 2000f;
         }
     }
 
@@ -190,6 +184,30 @@ public class Renderer : ICopy<Renderer>
             for (int j = 0; j < width; j += 1)
             {
                 if (float.Sqrt(float.Pow(i - (width / 2), 2) + float.Pow(j - (width / 2), 2)) <= width / 2)
+                {
+                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.White;
+                }
+                else
+                {
+                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.Transparent;
+                }
+            }
+        }
+        tex.SetData<Microsoft.Xna.Framework.Color>(data);
+        return tex;
+    }
+
+    public static Texture2D CreateCircleTexture(int width, int hole)
+    {
+        Texture2D tex = new Texture2D(GameManager.Instance.GraphicsDevice, width, width);
+        Microsoft.Xna.Framework.Color[] data = new Microsoft.Xna.Framework.Color[width * width];
+        for (int i = 0; i < width; i += 1)
+        {
+            float a = float.Pow(i - (width / 2), 2);
+            for (int j = 0; j < width; j += 1)
+            {
+                float d = float.Sqrt(a + float.Pow(j - (width / 2), 2));
+                if (d <= width / 2 && d >= hole / 2)
                 {
                     data[i + (j * width)] = Microsoft.Xna.Framework.Color.White;
                 }
@@ -224,6 +242,7 @@ public class Renderer : ICopy<Renderer>
         _bounds = BoundFunc.CreateBounds(2, 2);
         _texture = _defaultTexture;
         shadow = true;
+        layer = 0.5f;
     }
 
     public bool shadow;

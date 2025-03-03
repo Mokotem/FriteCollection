@@ -53,6 +53,11 @@ public abstract class UI : IDisposable
     private protected UI papa;
 
     public Point Scale => space.Scale;
+    public float alpha = 1f;
+    private protected Microsoft.Xna.Framework.Color GetColor()
+    {
+        return new Color(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B) * alpha;
+    }
 
     public bool Active
     {
@@ -471,6 +476,8 @@ public class Text : UI
     private string text;
     public bool Outline;
 
+    public float Size { get; set; }
+
     public string EditText
     {
         get => text;
@@ -533,6 +540,7 @@ public class Text : UI
 
     public Text(string txt, Rectangle space)
     {
+        this.Size = 1f;
         this.space = space;
         base.ApplyScale(Screen);
         ApplyText(txt);
@@ -543,6 +551,7 @@ public class Text : UI
 
     public Text(string txt, Rectangle space, UI parent)
     {
+        this.Size = 1f;
         this.space = space;
         base.ApplyScale(parent.Rectangle);
         ApplyText(txt);
@@ -573,13 +582,13 @@ public class Text : UI
                 {
                     GameManager.Instance.SpriteBatch.DrawString
                     (GameManager.Font, text, new Vector2(rect.X + r.X, rect.Y + r.Y),
-                    Microsoft.Xna.Framework.Color.Black, 0, Vector2.Zero, 1f,
+                    Microsoft.Xna.Framework.Color.Black * alpha, 0, Vector2.Zero, Size,
                     SpriteEffects.None, 0);
                 }
             }
             GameManager.Instance.SpriteBatch.DrawString
                 (GameManager.Font, text, new Vector2(rect.X, rect.Y),
-                new(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B), 0, Vector2.Zero, 1f,
+                this.GetColor(), 0, Vector2.Zero, Size,
                 SpriteEffects.None, 0);
         }
     }

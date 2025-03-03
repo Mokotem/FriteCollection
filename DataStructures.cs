@@ -1,6 +1,5 @@
 ﻿using FriteCollection.Entity;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,44 +9,12 @@ using System.Collections.Generic;
 /// </summary>
 namespace FriteCollection
 {
-    public static class Input
+    public interface IDraw
     {
-        private static KeyboardState _kbstate, _prekbstate;
-        private static MouseState _mouseState;
-
-        public static KeyboardState KB => _kbstate;
-        public static KeyboardState KBP => _prekbstate;
-
-        public static class Mouse
-        {
-            public static MouseState Sate => _mouseState;
-
-            private static Bounds _origin = Bounds.Center;
-            public static Bounds GridOrigin
-            {
-                get => _origin;
-                set
-                {
-                    _origin = value;
-                }
-            }
-
-            public static Vector Position
-            {
-                get
-                {
-                    Vector v = BoundFunc.BoundToVector(_origin, Screen.widht, Screen.height);
-                    return new Vector(_mouseState.Position.X - v.x, -_mouseState.Position.Y + v.y);
-                }
-            }
-        }
-
-        internal static void SetStates(KeyboardState kbs, MouseState mss)
-        {
-            _prekbstate = _kbstate;
-            _kbstate = kbs;
-            _mouseState = mss;
-        }
+        /// <summary>
+        /// Dessine l'entité à l'écran.
+        /// </summary>
+        public void Draw();
     }
 
     /// <summary>
@@ -661,7 +628,7 @@ namespace FriteCollection
     /// <summary>
     /// Comme un vecteur, mais dans les entiers relatifs.
     /// </summary>
-    public class Point
+    public struct Point
     {
         public int i;
         public int j;
@@ -669,12 +636,7 @@ namespace FriteCollection
         /// <summary>
         /// (0, 0)
         /// </summary>
-        private static readonly Point _zero = new Point(0, 0);
-
-        /// <summary>
-        /// (0, 0)
-        /// </summary>
-        public static Point Zero => _zero;
+        public static Point Zero => new Point(0, 0);
 
         public Point(int i, int j)
         {
