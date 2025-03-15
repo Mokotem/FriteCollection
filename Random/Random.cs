@@ -26,7 +26,7 @@ public class Random
     }
     private ulong F2(ulong n)
     {
-        return (n + 1) * n * 3 + 4 + (_seed % 12);
+        return (n + 1) * n * 3 + 4 + _seed;
     }
 
     private void _next()

@@ -26,6 +26,7 @@ public class Settings
     public byte UICoef = 1;
     public byte StartScene = 0;
     public byte FPS = 60;
+    public bool AllowUserResizeing = false;
 }
 
 public static class GameManager
@@ -40,7 +41,6 @@ public static class GameManager
     {
         _nstnc.Exit();
     }
-
 
     public static bool FullScreen
     {
@@ -103,6 +103,25 @@ public static class GameManager
             _currentScene = value;
             Instance.UpdateScriptToScene();
         }
+    }
+
+    public delegate Texture2D TextureCreator(GraphicsDevice graphic, ref SpriteBatch batch);
+    public delegate void TextureModifier(GraphicsDevice graphic, ref SpriteBatch batch, Texture2D texture);
+    public delegate void TextureMaker(GraphicsDevice graphic, ref SpriteBatch batch);
+
+    public static void MakeTextureCreator(TextureCreator method)
+    {
+        method(Instance.GraphicsDevice, ref Instance.SpriteBatch);
+    }
+
+    public static void MakeTextureModifier(TextureModifier method, Texture2D texture)
+    {
+        method(Instance.GraphicsDevice, ref Instance.SpriteBatch, texture);
+    }
+
+    public static void MakeTexture(TextureMaker method)
+    {
+        method(Instance.GraphicsDevice, ref Instance.SpriteBatch);
     }
 }
 
@@ -213,5 +232,14 @@ public static class Screen
     /// Couleur d'arrière plan.
     /// </summary>
     public static Graphics.Color backGround = new(0.1f, 0.2f, 0.3f);
+
+    internal static int rww, rwh;
+    public static int RealWindowWidth => rww;
+    public static int RealWindowHeight => rwh;
+
     public static readonly int widht = GameManager.Settings.GameFixeWidth, height = GameManager.Settings.GameFixeHeight;
+    public static int WindowWidth => GameManager.Instance.targetGameRectangle.Width;
+    public static int WindowHeight => GameManager.Instance.targetGameRectangle.Height;
+    public static int UserWidth => GameManager.Instance.display.Width;
+    public static int UserHeight => GameManager.Instance.display.Height;
 }

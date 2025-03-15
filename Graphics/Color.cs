@@ -276,9 +276,9 @@ namespace FriteCollection.Graphics
                     float X = C * (1 - MathF.Abs(H / 60f % 2 - 1));
                     float m = V - C;
 
-                    float Rp = 0;
-                    float Gp = 0;
-                    float Bp = 0;
+                    float Rp;
+                    float Gp;
+                    float Bp;
 
                     if (0 <= H && H < 60) { Rp = C; Gp = X; Bp = 0; }
                     else if (60 <= H && H < 120) { Rp = X; Gp = C; Bp = 0; }
@@ -348,7 +348,7 @@ namespace FriteCollection.Graphics
             }
         }
 
-        internal Microsoft.Xna.Framework.Color ToMonogameColor()
+        public Microsoft.Xna.Framework.Color ToMonogameColor()
         {
             return new Microsoft.Xna.Framework.Color(_rgb.R, _rgb.G, _rgb.B);
         }

@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace FriteCollection.Scripting;
 
@@ -74,39 +73,6 @@ public class Sequence : Clone
         else
             Destroy();
     }
-}
-
-public struct GameSettings
-{
-    /// <summary>
-    /// Frames par secondes.
-    /// </summary>
-    public int FPS;
-
-    /// <summary>
-    /// Dimension de la fenêtre de teste.
-    /// </summary>
-    public int WindowWidth, WindowHeight;
-
-    /// <summary>
-    /// Dimension de la fenêtre de jeux.
-    /// </summary>
-    public int GameFixeWidth, GameFixeHeight;
-
-    /// <summary>
-    /// Plein écran
-    /// </summary>
-    public bool FullScreen;
-
-    public bool PixelArtDrawing;
-
-    /// <summary>
-    /// Scène de départ.
-    /// </summary>
-    public byte StartScene;
-
-    public string WindowName;
-    public byte UICoef;
 }
 
 /// <summary>

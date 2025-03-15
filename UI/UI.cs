@@ -40,6 +40,15 @@ public class Rectangle
     }
 }
 
+public interface IEdit<T>
+{
+    public T Edit
+    {
+        get;
+        set;
+    }
+}
+
 public abstract class UI : IDisposable
 {
     public virtual void Dispose()
@@ -48,11 +57,33 @@ public abstract class UI : IDisposable
             papa.Dispose();
     }
 
+    private void OnWindowChange(bool full)
+    {
+        Screen = new Microsoft.Xna.Framework.Rectangle(0, 0,
+            FriteCollection.Screen.WindowWidth * GameManager.Settings.UICoef,
+            FriteCollection.Screen.WindowHeight * GameManager.Settings.UICoef);
+        ApplyPosition(papa is null ? Screen : papa.Rectangle);
+    }
+
+    public UI()
+    {
+        FriteModel.MonoGame.WindowChange += this.OnWindowChange;
+    }
+
     private protected bool _active = true;
     public delegate void Procedure();
     private protected UI papa;
 
-    public Point Scale => space.Scale;
+    public Point Scale
+    {
+        get => space.Scale;
+        set
+        {
+            space.Scale = value;
+            ApplyScale(papa is null ? Screen : papa.Rectangle);
+            ApplyPosition(papa is null ? Screen : papa.Rectangle);
+        }
+    }
     public float alpha = 1f;
     private protected Microsoft.Xna.Framework.Color GetColor()
     {
@@ -94,9 +125,9 @@ public abstract class UI : IDisposable
     }
 
     public Microsoft.Xna.Framework.Rectangle Rectangle => rect;
-    public static readonly Microsoft.Xna.Framework.Rectangle Screen = new Microsoft.Xna.Framework.Rectangle
-(0, 0, GameManager.Settings.GameFixeWidth * GameManager.Settings.UICoef,
-       GameManager.Settings.GameFixeHeight * GameManager.Settings.UICoef);
+    public static Microsoft.Xna.Framework.Rectangle Screen = new Microsoft.Xna.Framework.Rectangle
+(0, 0, FriteCollection.Screen.WindowWidth * GameManager.Settings.UICoef,
+      FriteCollection.Screen.WindowHeight * GameManager.Settings.UICoef);
 
     public Graphics.Color Color = Graphics.Color.White;
 
@@ -257,30 +288,30 @@ public abstract class ButtonCore : UI
                 papa.Add(titleText);
             }
             else
-                titleText.EditText = value;
+                titleText.Edit = value;
         }
     }
 
-    public ButtonCore(TileSet tileset, Rectangle space, UI parent)
+    public ButtonCore(TileSet tileset, Rectangle space, UI parent) : base()
     {
         papa = new Panel(tileset, space, parent);
         I.buttons.Add(this);
     }
 
 
-    public ButtonCore(TileSet tileset, Rectangle space)
+    public ButtonCore(TileSet tileset, Rectangle space) : base()
     {
         papa = new Panel(tileset, space);
         I.buttons.Add(this);
     }
 
-    public ButtonCore(Texture2D image, Rectangle space, UI parent)
+    public ButtonCore(Texture2D image, Rectangle space, UI parent) : base()
     {
         papa = new Image(image, space, parent);
         I.buttons.Add(this);
     }
 
-    public ButtonCore(string title, TileSet tileset, Rectangle space, UI parent)
+    public ButtonCore(string title, TileSet tileset, Rectangle space, UI parent) : base()
     {
         papa = new Panel(tileset, space, parent);
         titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
@@ -288,7 +319,7 @@ public abstract class ButtonCore : UI
         I.buttons.Add(this);
     }
 
-    public ButtonCore(string title, Texture2D image, Rectangle space, UI parent)
+    public ButtonCore(string title, Texture2D image, Rectangle space, UI parent) : base()
     {
         papa = new Image(image, space, parent);
         titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
@@ -296,13 +327,13 @@ public abstract class ButtonCore : UI
         I.buttons.Add(this);
     }
 
-    public ButtonCore(Texture2D image, Rectangle space)
+    public ButtonCore(Texture2D image, Rectangle space) : base()
     {
         papa = new Image(image, space);
         I.buttons.Add(this);
     }
 
-    public ButtonCore(string title, TileSet tileset, Rectangle space)
+    public ButtonCore(string title, TileSet tileset, Rectangle space) : base()
     {
         papa = new Panel(tileset, space);
         titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
@@ -310,7 +341,7 @@ public abstract class ButtonCore : UI
         I.buttons.Add(this);
     }
 
-    public ButtonCore(string title, Texture2D image, Rectangle space)
+    public ButtonCore(string title, Texture2D image, Rectangle space) : base()
     {
         papa = new Image(image, space);
         titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
@@ -423,17 +454,17 @@ public class Button : ButtonCore
     }
 }
 
-public class Image : UI
+public class Image : UI, IEdit<Texture2D>
 {
     private Texture2D image;
 
-    public Texture2D Texture
+    public Texture2D Edit
     {
         get => image;
         set => image = value;
     }
 
-    public Image(Texture2D image, Rectangle space)
+    public Image(Texture2D image, Rectangle space) : base()
     {
         this.image = image;
         this.space = space;
@@ -441,7 +472,7 @@ public class Image : UI
         base.ApplyPosition(Screen);
     }
 
-    public Image(Texture2D image, Rectangle space, UI parent)
+    public Image(Texture2D image, Rectangle space, UI parent) : base()
     {
         this.image = image;
         this.space = space;
@@ -453,8 +484,7 @@ public class Image : UI
     {
         if (_active)
         {
-            GameManager.Instance.SpriteBatch.Draw(image, rect,
-            new(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B));
+            GameManager.Instance.SpriteBatch.Draw(image, rect, this.Color.ToMonogameColor() * alpha);
             foreach (UI element in childs)
                 element.Draw();
         }
@@ -470,7 +500,7 @@ public class Image : UI
     }
 }
 
-public class Text : UI
+public class Text : UI, IEdit<string>
 {
     private Microsoft.Xna.Framework.Rectangle par;
     private string text;
@@ -478,7 +508,7 @@ public class Text : UI
 
     public float Size { get; set; }
 
-    public string EditText
+    public string Edit
     {
         get => text;
         set
@@ -538,7 +568,7 @@ public class Text : UI
         rect.Height = (int)s.Y;
     }
 
-    public Text(string txt, Rectangle space)
+    public Text(string txt, Rectangle space) : base()
     {
         this.Size = 1f;
         this.space = space;
@@ -549,7 +579,7 @@ public class Text : UI
         Outline = false;
     }
 
-    public Text(string txt, Rectangle space, UI parent)
+    public Text(string txt, Rectangle space, UI parent) : base()
     {
         this.Size = 1f;
         this.space = space;
@@ -595,28 +625,36 @@ public class Text : UI
 }
 
 
-public class Panel : UI, IDisposable
+public class Panel : UI, IDisposable, IEdit<Texture2D>
 {
     private TileSet tileSet;
     private Texture2D texture;
     private RenderTarget2D rt;
 
-    private void CreateTexture()
+    public Texture2D Edit
     {
-        int sx = tileSet.TileSize.i;
-        int sy = tileSet.TileSize.j;
-        if (rect.Width < sx * 2)
+        get => texture;
+        set => this.texture = value;
+    }
+
+    public static Texture2D CreatePanelTexture(
+        TileSet set,
+        Point size)
+    {
+        int sx = set.TileSize.i;
+        int sy = set.TileSize.j;
+        if (size.i < sx * 2)
         {
-            sx = rect.Width / 2;
+            sx = size.i / 2;
         }
-        if (rect.Height < sy * 2)
+        if (size.j < sy * 2)
         {
-            sy = rect.Height / 2;
+            sy = size.j / 2;
         }
 
         GraphicsDevice gd = GameManager.Instance.GraphicsDevice;
         SpriteBatch sb = GameManager.Instance.SpriteBatch;
-        rt = new RenderTarget2D(gd, rect.Width, rect.Height);
+        RenderTarget2D rt = new RenderTarget2D(gd, size.i, size.j);
 
         gd.SetRenderTarget(rt);
         gd.Clear(Microsoft.Xna.Framework.Color.Transparent);
@@ -628,7 +666,7 @@ public class Panel : UI, IDisposable
             if (x == 0 || x == 2)
                 width = sx;
             else
-                width = rect.Width - (sx * GameManager.Settings.UICoef);
+                width = size.i - (sx * GameManager.Settings.UICoef);
 
             int posX;
             if (x == 0)
@@ -636,7 +674,7 @@ public class Panel : UI, IDisposable
             else if (x == 1)
                 posX = sx;
             else
-                posX = rect.Width - sx;
+                posX = size.i - sx;
 
 
             for (int y = 0; y < 3; y++)
@@ -645,7 +683,7 @@ public class Panel : UI, IDisposable
                 if (y == 0 || y == 2)
                     height = sy;
                 else
-                    height = rect.Height - (sy * GameManager.Settings.UICoef);
+                    height = size.j - (sy * GameManager.Settings.UICoef);
 
                 int posY;
                 if (y == 0)
@@ -653,17 +691,17 @@ public class Panel : UI, IDisposable
                 else if (y == 1)
                     posY = sy;
                 else
-                    posY = rect.Height - sy;
+                    posY = size.j - sy;
 
-                sb.Draw(tileSet.Texture,
+                sb.Draw(set.Texture,
                     new Microsoft.Xna.Framework.Rectangle(posX, posY, width, height),
-                    tileSet.GetRectangle(x + (y * 3)),
-                    new(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B));
+                    set.GetRectangle(x + (y * 3)),
+                    Microsoft.Xna.Framework.Color.White);
             }
         }
 
         sb.End();
-        texture = rt;
+        return rt;
     }
 
     public override int PositionY
@@ -685,32 +723,32 @@ public class Panel : UI, IDisposable
         this.childs.Clear();
     }
 
-    public Panel(Rectangle space)
+    public Panel(Rectangle space) : base()
     {
         this.space = space;
         ApplySpace(Screen);
     }
 
-    public Panel(Rectangle space, UI parent)
+    public Panel(Rectangle space, UI parent) : base()
     {
         this.space = space;
         ApplySpace(parent.Rectangle);
     }
 
-    public Panel(TileSet tileSet, Rectangle space)
+    public Panel(TileSet tileSet, Rectangle space) : base()
     {
         this.space = space;
         this.tileSet = tileSet;
         ApplySpace(Screen);
-        CreateTexture();
+        this.texture = CreatePanelTexture(tileSet, space.Scale);
     }
 
-    public Panel(TileSet tileSet, Rectangle space, UI parent)
+    public Panel(TileSet tileSet, Rectangle space, UI parent) : base()
     {
         this.space = space;
         this.tileSet = tileSet;
         ApplySpace(parent.Rectangle);
-        CreateTexture();
+        this.texture = CreatePanelTexture(tileSet, space.Scale);
     }
 
     public override void Draw()

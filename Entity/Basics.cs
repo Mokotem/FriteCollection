@@ -197,7 +197,7 @@ public class Renderer : ICopy<Renderer>
         return tex;
     }
 
-    public static Texture2D CreateCircleTexture(int width, int hole)
+    public static Texture2D CreateCircleTexture(int width, int holeSize)
     {
         Texture2D tex = new Texture2D(GameManager.Instance.GraphicsDevice, width, width);
         Microsoft.Xna.Framework.Color[] data = new Microsoft.Xna.Framework.Color[width * width];
@@ -207,7 +207,30 @@ public class Renderer : ICopy<Renderer>
             for (int j = 0; j < width; j += 1)
             {
                 float d = float.Sqrt(a + float.Pow(j - (width / 2), 2));
-                if (d <= width / 2 && d >= hole / 2)
+                if (d <= width / 2 && d >= holeSize / 2)
+                {
+                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.White;
+                }
+                else
+                {
+                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.Transparent;
+                }
+            }
+        }
+        tex.SetData<Microsoft.Xna.Framework.Color>(data);
+        return tex;
+    }
+
+    public static Texture2D CreateFrameTexture(int width, int height, ushort borderSize)
+    {
+        Texture2D tex = new Texture2D(GameManager.Instance.GraphicsDevice, width, width);
+        Microsoft.Xna.Framework.Color[] data = new Microsoft.Xna.Framework.Color[width * width];
+        for (int i = 0; i < width; i += 1)
+        {
+            float a = float.Pow(i - (width / 2), 2);
+            for (int j = 0; j < height; j += 1)
+            {
+                if (i < borderSize || j < borderSize || width - i < borderSize + 1 || height - j < borderSize + 1)
                 {
                     data[i + (j * width)] = Microsoft.Xna.Framework.Color.White;
                 }
@@ -246,6 +269,11 @@ public class Renderer : ICopy<Renderer>
     }
 
     public bool shadow;
+
+    public static RenderTarget2D CreateRenderTarget(int width, int height)
+    {
+        return new RenderTarget2D(GameManager.Instance.GraphicsDevice, width, height);
+    }
 
     public Renderer Copy()
     {

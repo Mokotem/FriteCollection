@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using FriteCollection;
 using FriteCollection.Entity;
 using FriteCollection.Scripting;
@@ -22,6 +21,9 @@ public class MonoGame : Game
     private readonly Type[] _childTypes;
     private SamplerState drawstate;
 
+    public delegate void OnWindowChange(bool full);
+    public static event OnWindowChange WindowChange;
+
     public MonoGame(Type[] childTypes)
     {
         _childTypes = childTypes;
@@ -29,6 +31,7 @@ public class MonoGame : Game
         graphics = new GraphicsDeviceManager(this);
         Window.AllowAltF4 = false;
         Window.AllowUserResizing = false;
+        Window.AllowUserResizing = S.AllowUserResizeing;
         GameManager.SetGameInstance(this);
     }
 
@@ -142,7 +145,7 @@ public class MonoGame : Game
 
     private bool _fullScreen;
     internal float aspectRatio;
-    DisplayMode display => GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+    internal DisplayMode display => GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
 
     internal bool FullScreen
     {
@@ -154,7 +157,18 @@ public class MonoGame : Game
         {
             _fullScreen = value;
 
-            renderTarget = new RenderTarget2D(GraphicsDevice, S.GameFixeWidth, S.GameFixeHeight);
+            if (value)
+            {
+                Screen.rww = display.Width;
+                Screen.rwh = display.Height;
+            }
+            else
+            {
+                Screen.rww = graphics.PreferredBackBufferWidth;
+                Screen.rwh = graphics.PreferredBackBufferHeight;
+            }
+
+                renderTarget = new RenderTarget2D(GraphicsDevice, S.GameFixeWidth, S.GameFixeHeight);
 
             if (value == false)
             {
@@ -187,8 +201,11 @@ public class MonoGame : Game
                 );
             }
 
-            renderTargetUI = new RenderTarget2D(GraphicsDevice, renderTarget.Width, renderTarget.Height);
-            UIscreenBounds = BoundFunc.CreateBounds(renderTarget.Width, renderTarget.Height);
+            if (WindowChange is not null)
+                WindowChange(value);
+
+            renderTargetUI = new RenderTarget2D(GraphicsDevice, targetGameRectangle.Width, targetGameRectangle.Height);
+            UIscreenBounds = BoundFunc.CreateBounds(targetGameRectangle.Width, targetGameRectangle.Height);
             graphics.HardwareModeSwitch = !value;
             graphics.IsFullScreen = value;
             graphics.ApplyChanges();
@@ -199,6 +216,11 @@ public class MonoGame : Game
 
     internal Vector[] screenBounds, UIscreenBounds;
     internal bool previousMouseLeft;
+
+    public static void SetUserCursor(Texture2D tex, int ox, int oy)
+    {
+        Mouse.SetCursor(MouseCursor.FromTexture2D(tex, ox, oy));
+    }
 
     protected override void Update(GameTime gameTime)
     {
@@ -293,7 +315,7 @@ public class MonoGame : Game
             SpriteBatch.Begin(samplerState: drawstate);
             SpriteBatch.Draw(
                 renderTarget,
-                new Rectangle(0, 0, renderTarget.Width, renderTarget.Height),
+                new Rectangle(0, 0, targetGameRectangle.Width, targetGameRectangle.Height),
                 Color.White);
 
             SpriteBatch.End();
@@ -303,7 +325,6 @@ public class MonoGame : Game
                 script.DrawUI();
             }
             SpriteBatch.End();
-
         }
         GraphicsDevice.SetRenderTarget(null);
         GraphicsDevice.Clear(Color.Black);

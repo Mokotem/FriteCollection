@@ -35,8 +35,12 @@ public class TileSet : IDisposable
         _dontDraw.Add(i + j * Xlenght);
     }
 
-    public TileSet(Texture2D texture)
+    public TileSet(Texture2D texture, Point tileSize, Point tileSeparation, Point tileMargin)
     {
+        _tileSize = tileSize;
+        _tileSeparation = tileSeparation;
+        _tileMargin = tileMargin;
+        Apply();
         entities = new List<Entity.Object>();
         _texture = texture;
         sheet = new Point(texture.Width, texture.Height);
@@ -116,8 +120,8 @@ public class TileSet : IDisposable
 
 public class TileMap : IDisposable
 {
-    int xCount;
-    int yCount;
+    readonly int xCount;
+    readonly int yCount;
 
     public delegate void DoAt(Point pos);
 
@@ -375,7 +379,7 @@ public class TileMap : IDisposable
     private readonly TileSet _sheet;
     private readonly OgmoFile _file;
 
-    private RenderTarget2D _renderTarget;
+    private readonly RenderTarget2D _renderTarget;
     public Texture2D Texture
     {
         get
