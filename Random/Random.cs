@@ -39,10 +39,10 @@ public class Random
         _branche = r;
     }
 
-    public int Next(ulong maxValue)
+    public int Next(int maxValue)
     {
         _next();
-        return (int)(Branche % maxValue);
+        return (int)(Branche) % maxValue;
     }
 
     public float Next(float maxValue)

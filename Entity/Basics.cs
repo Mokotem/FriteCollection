@@ -18,13 +18,33 @@ interface ICopy<T>
 /// </summary>
 public class Space : ICopy<Space>
 {
-    public Space()
+    public static void SetDefaultEnvironment(ref readonly Environment env)
+    {
+        defaultEnvironment = env;
+    }
+    private static Environment defaultEnvironment;
+
+    private readonly Environment environment;
+
+    private void Init()
     {
         _eGridOrigin = Bounds.Center;
         _eCenterPoint = Bounds.Center;
         Position = Vector.Zero;
         Scale = new Vector(50, 50);
         rotation = 0;
+    }
+
+    public Space()
+    {
+        this.environment = defaultEnvironment;
+        Init();
+    }
+
+    public Space(ref readonly Environment env)
+    {
+        this.environment = env;
+        Init();
     }
 
     public Space Copy()
@@ -45,9 +65,9 @@ public class Space : ICopy<Space>
         return
             new Vector(
                 (Position.x - Camera.Position.x) * Camera.zoom
-                + GameManager.Instance.screenBounds[(int)GridOrigin].x,
+                + environment.bounds[(int)GridOrigin].x,
                 -((Position.y - Camera.Position.y) * Camera.zoom)
-                + GameManager.Instance.screenBounds[(int)GridOrigin].y);
+                + environment.bounds[(int)GridOrigin].y);
     }
 
     private Bounds _eGridOrigin;
@@ -227,7 +247,6 @@ public class Renderer : ICopy<Renderer>
         Microsoft.Xna.Framework.Color[] data = new Microsoft.Xna.Framework.Color[width * width];
         for (int i = 0; i < width; i += 1)
         {
-            float a = float.Pow(i - (width / 2), 2);
             for (int j = 0; j < height; j += 1)
             {
                 if (i < borderSize || j < borderSize || width - i < borderSize + 1 || height - j < borderSize + 1)

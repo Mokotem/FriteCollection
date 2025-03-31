@@ -1,5 +1,6 @@
 ﻿using FriteCollection.Entity;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -58,21 +59,21 @@ namespace FriteCollection
 
         private protected void Resize(short scale)
         {
-            T[] _destination = new T[_lenght + scale];
+            T[] _destination = new T[Lenght + scale];
             if (scale >= 0)
             {
-                System.Array.Copy(_values, _destination, _lenght);
+                System.Array.Copy(_values, _destination, Lenght);
                 _values = _destination;
             }
             else
             {
-                for (uint i = 0; i < _lenght - 1; i++)
+                for (uint i = 0; i < Lenght - 1; i++)
                     _destination[i] = _values[i];
                 _values = _destination;
             }
         }
 
-        private protected uint _lenght => _values is null ? 0 : (uint)_values.Length;
+        private protected uint Lenght => _values is null ? 0 : (uint)_values.Length;
 
         /// <summary>
         /// Vide le tableau.
@@ -92,12 +93,12 @@ namespace FriteCollection
 
         public override string ToString()
         {
-            if (_lenght > 0)
+            if (Lenght > 0)
             {
                 string result = this.GetType().Name + " " + typeof(T).Name + " [";
-                for (uint i = 0; i < _lenght - 1; i++)
+                for (uint i = 0; i < Lenght - 1; i++)
                     result += _values[i].ToString() + ", ";
-                return result + _values[_lenght - 1].ToString() + "]";
+                return result + _values[Lenght - 1].ToString() + "]";
             }
             else
                 return this.GetType().Name + " " + typeof(T).Name + " []";
@@ -118,7 +119,7 @@ namespace FriteCollection
             }
         }
 
-        public uint Lenght => _lenght;
+        public uint Lenght => base.Lenght;
 
         /// <summary>
         /// Lire le haut de la pile.
@@ -133,22 +134,22 @@ namespace FriteCollection
 
         public void Add(T value)
         {
-            if (_lenght <= 0)
+            if (base.Lenght <= 0)
             {
                 _values = new T[1] { value };
             }
             else
             {
                 Resize(1);
-                _values[_lenght - 1] = value;
+                _values[base.Lenght - 1] = value;
             }
         }
 
         public bool Remove()
         {
-            if (_lenght > 0)
+            if (base.Lenght > 0)
             {
-                for (uint j = 0; j < _lenght - 1; j++)
+                for (uint j = 0; j < base.Lenght - 1; j++)
                 {
                     _values[j] = _values[j + 1];
                 }
@@ -191,7 +192,7 @@ namespace FriteCollection
         /// <summary>
         /// Hauteur de la pile. (longueur de la liste)
         /// </summary>
-        public uint Height => _lenght;
+        public uint Height => Lenght;
 
         /// <summary>
         /// Lire le haut de la pile.
@@ -200,20 +201,20 @@ namespace FriteCollection
         {
             get
             {
-                return _values[_lenght - 1];
+                return _values[Lenght - 1];
             }
         }
 
         public void Add(T value)
         {
-            if (_lenght <= 0)
+            if (Lenght <= 0)
             {
                 _values = new T[1] { value };
             }
             else
             {
                 Resize(1);
-                _values[_lenght - 1] = value;
+                _values[Lenght - 1] = value;
             }
         }
 
@@ -223,7 +224,7 @@ namespace FriteCollection
         /// <returns>Si un élément a bien été enlevé.</returns>
         public bool Remove()
         {
-            if (_lenght > 0)
+            if (Lenght > 0)
             {
                 Resize(-1);
                 return true;
@@ -244,275 +245,30 @@ namespace FriteCollection
     }
 
     /// <summary>
-    /// Liste d'éléments.
+    /// Environement de dessin.
     /// </summary>
-    public class List<T> : ArrayObject<T>, IEnumerable, ICopy<List<T>>
+    public class Environment : IDraw
     {
-        public List(params T[] elements)
+        public readonly Rectangle rect;
+        public readonly RenderTarget2D target;
+        public readonly Vector[] bounds;
+        public Environment(Rectangle t, RenderTarget2D r)
         {
-            if (elements.Length <= 0)
-            {
-                _values = new T[0];
-            }
-            else
-            {
-                _values = elements;
-            }
+            rect = t;
+            target = r;
+            bounds = BoundFunc.CreateBounds(r.Width, r.Height);
         }
 
-        public List<T> Copy()
+        public void Draw()
         {
-            if (_values is null)
-            {
-                return new List<T>();
-            }
-            List<T> list = new List<T>();
-            list._values = (T[])this._values.Clone();
-            return list;
+            GameManager.Instance.SpriteBatch.Draw(target, rect, Color.White);
         }
 
-        /// <summary>
-        /// Taille de la liste.
-        /// </summary>
-        public uint Lenght => _lenght;
-
-        /// <summary>
-        /// Colle deux liste entre elles.
-        /// exemple : [1, 2] + [3, 4] => [1, 2, 3, 4]
-        /// </summary>
-        public static List<T> operator +(List<T> a, List<T> b)
+        public void Draw(float depth)
         {
-            T[] result = new T[a._lenght + b._lenght];
-            for (uint i = 0; i < a._lenght; i += 1)
-            {
-                result[i] = a[i];
-            }
-            for (uint i = 0; i < b._lenght; i += 1)
-            {
-                result[i + a._lenght] = b[i];
-            }
-            return new List<T>(result);
-        }
-
-        public void Add(T value)
-        {
-            if (_lenght <= 0)
-            {
-                _values = new T[1] { value };
-            }
-            else
-            {
-                Resize(1);
-                _values[_lenght - 1] = value;
-            }
-        }
-
-        public void Sort()
-        {
-            Array.Sort<T>(_values);
-        }
-
-        public void Sort(IComparer<T> comparer)
-        {
-            Array.Sort<T>(_values, comparer);
-        }
-
-        /// <summary>
-        /// Prive la liste d'éléments.
-        /// exemple: [1, 2, 3, 2] / {2} => [1, 3]
-        /// </summary>
-        public static List<T> operator /(List<T> a, T[] b)
-        {
-            List<T> result = a.Copy();
-            foreach (T t in b)
-            {
-                result.RemoveAll(t);
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Prive la liste d'éléments.
-        /// exemple: [1, 2, 3, 2] / [2] => [1, 3]
-        /// </summary>
-        public static List<T> operator /(List<T> a, List<T> b)
-        {
-            List<T> result = a.Copy();
-            foreach (T t in b)
-            {
-                result.RemoveAll(t);
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Dernier élément de la liste.
-        /// </summary>
-        public T Last => _values[this._lenght - 1];
-
-        /// <summary>
-        /// Vérifie si la liste contient un élément.
-        /// </summary>
-        public bool Contains(T element)
-        {
-            foreach (T value in _values)
-            {
-                if (element.Equals(value))
-                    return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Compte le nombre d'occurrences d'élément.
-        /// </summary>
-        public uint Count(T element)
-        {
-            uint n = 0;
-            foreach (T value in _values)
-            {
-                if (element.Equals(value))
-                    n++;
-            }
-            return n;
-        }
-
-        /// <summary>
-        /// Retourne l'indexe de la première occurrence d'un élément.
-        /// </summary>
-        public uint IndexOf(T element)
-        {
-            for (uint i = 0; i < _lenght; i++)
-            {
-                if (_values[i].Equals(element))
-                    return i;
-            }
-
-            throw new System.IndexOutOfRangeException();
-        }
-
-        /// <summary>
-        /// Ajoute un élément, à un certain indexe.
-        /// </summary>
-        public void Add(T value, uint index)
-        {
-            if (index >= _lenght - 1)
-            {
-                this.Add(value);
-            }
-            else
-            {
-                Resize(1);
-                for (uint i = _lenght - 2; i > index && i >= 0; i--)
-                {
-                    _values[i + 1] = _values[i];
-                }
-                _values[index + 1] = _values[index];
-                _values[index] = value;
-            }
-        }
-
-        /// <summary>
-        /// Supprime la première occurrence d'un élément.
-        /// </summary>
-        /// <returns>Si l'élément a bien été enlevé.</returns>
-        public bool Remove(T value)
-        {
-            if (_values is not null)
-            {
-                uint i = 0;
-                while (i < _values.Length && !value.Equals(_values[i]))
-                {
-                    i += 1;
-                }
-                RemoveIndex(i);
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Supprime toutes les apparitions d'un élément.
-        /// </summary>
-        /// <returns>Si au moins un élément a été enlevé.</returns>
-        public bool RemoveAll(T value)
-        {
-            bool b = false;
-            if (_values is not null)
-            {
-                uint i = 0;
-                while (i < _lenght)
-                {
-                    if (_values[i].Equals(value))
-                    {
-                        RemoveIndex(i);
-                        if (i < _lenght - 1)
-                        {
-                            i = 0;
-                            b = true;
-                        }
-                        else
-                            i = _lenght;
-                    }
-                    else
-                        i += 1;
-                }
-            }
-
-            return b;
-        }
-
-        /// <summary>
-        /// Supprime le dernier élément.
-        /// </summary>
-        /// <returns>Si un élément a bien été enlevé.</returns>
-        public bool Remove()
-        {
-            if (_lenght > 0)
-            {
-                RemoveIndex(_lenght - 1);
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Supprime le dernier élément de la pile.
-        /// </summary>
-        /// <returns>Si un élément a bien été enlevé.</returns>
-        public bool RemoveIndex(uint index)
-        {
-            if (index < _lenght)
-            {
-                for (uint j = index; j < _lenght - 1; j++)
-                {
-                    _values[j] = _values[j + 1];
-                }
-                Resize(-1);
-                return true;
-            }
-            return false;
-        }
-
-        public T this[uint index]
-        {
-            get
-            {
-                return _values[index];
-            }
-
-            set
-            {
-                _values[index] = value;
-            }
-        }
-
-        public IEnumerator GetEnumerator()
-        {
-            return new ListEnum(_values);
+            GameManager.Instance.SpriteBatch.Draw(target, rect, null, Color.White, 0, Vector2.Zero, SpriteEffects.None, depth);
         }
     }
-
 
     /// <summary>
     /// Représente un Vecteur, un Point de l'espace.

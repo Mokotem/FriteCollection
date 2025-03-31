@@ -1,0 +1,247 @@
+﻿using FriteCollection.Scripting;
+using FriteCollection.Tools.TileMap;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
+
+namespace FriteCollection.UI;
+
+public abstract class ButtonCore : Panel
+{
+    protected Text titleText;
+    private bool enabled = true;
+    public bool Enabled
+    {
+        get => enabled;
+        set
+        {
+            enabled = value;
+        }
+    }
+
+    private FriteModel.MonoGame I => GameManager.Instance;
+
+    private bool clic =>
+        enabled
+     && GameManager.Instance.IsActive
+     && _active
+     && Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed
+     && IsInRange(Input.Mouse.GetPointPosition(in this.Space.environment, I.MouseClickedPosition))
+     && IsInRange(Input.Mouse.GetPointPosition(in this.Space.environment))
+     && Time.Timer >= 0.2f;
+
+    private bool IsInRange(Point pos) =>
+        GameManager.Instance.IsActive
+     && pos.i >= this.mRect.X && pos.i < this.mRect.X + this.mRect.Width
+     && pos.j >= this.mRect.Y && pos.j < this.mRect.Y + this.mRect.Height;
+
+    private protected bool selected = false;
+    private bool previousClic = false;
+
+    private protected Procedure _fonction;
+
+    public override void Dispose()
+    {
+        I._buttons.Remove(this);
+        _fonction = null;
+        if (titleText is not null)
+        {
+            titleText.Dispose();
+        }
+    }
+
+    private void SetGreyColor()
+    {
+        this.Color = new Graphics.Color(0.7f, 0.7f, 0.7f);
+        if (titleText is not null)
+            titleText.Color = new Graphics.Color(0.7f, 0.7f, 0.7f);
+    }
+
+    internal void Update()
+    {
+        if (_active)
+        {
+            if (enabled)
+            {
+                selected = IsInRange(Input.Mouse.GetPointPosition(in this.Space.environment));
+
+                if (clic)
+                {
+                    SetGreyColor();
+                }
+                else
+                {
+                    this.Color = Graphics.Color.White;
+                    if (titleText is not null)
+                        titleText.Color = Graphics.Color.White;
+
+                    if (previousClic == true && _fonction is not null && selected)
+                    {
+                        _fonction();
+                        previousClic = false;
+                        if (!enabled) SetGreyColor();
+                        selected = false;
+                    }
+                }
+            }
+            else SetGreyColor();
+        }
+
+        previousClic = clic;
+    }
+
+    public string EditText
+    {
+        set
+        {
+            if (titleText is null)
+            {
+                this.childs = new List<UI> { new Text(value, new Rectangle(Bounds.Center, Extend.Full), this) };
+            }
+            else
+                titleText.Edit = value;
+        }
+    }
+
+    public ButtonCore(TileSet tileset, Rectangle space, UI parent) : base(tileset, space, parent)
+    {
+        I._buttons.Add(this);
+    }
+
+
+    public ButtonCore(TileSet tileset, Rectangle space) : base(tileset, space)
+    {
+        I._buttons.Add(this);
+    }
+
+    public ButtonCore(Texture2D image, Rectangle space, UI parent) : base(image, space, parent)
+    {
+        I._buttons.Add(this);
+    }
+
+
+    public ButtonCore(Texture2D image, Rectangle space) : base(image, space)
+    {
+        I._buttons.Add(this);
+    }
+
+    public ButtonCore(string title, TileSet tileset, Rectangle space, UI parent) : base(tileset, space, parent)
+    {
+        Point fs = this.mRect.Width < 10 ? new(-3, -1) : new(0, -2);
+        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, fs), this);
+        titleText.Outline = true;
+        this.Add(titleText);
+        I._buttons.Add(this);
+    }
+
+    public ButtonCore(string title, TileSet tileset, Rectangle space) : base(tileset, space)
+    {
+        Point fs = this.mRect.Width < 10 ? new(-3, -1) : new(0, -2);
+        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, fs), this);
+        titleText.Outline = true;
+        this.Add(titleText);
+        I._buttons.Add(this);
+    }
+
+    public ButtonCore(string title, Texture2D image, Rectangle space, UI parent) : base(image, space, parent)
+    {
+        Point fs = this.mRect.Width < 10 ? new(-3, -1) : new(0, -2);
+        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, fs), this);
+        titleText.Outline = true;
+        this.Add(titleText);
+        I._buttons.Add(this);
+    }
+
+    public ButtonCore(string title, Texture2D image, Rectangle space) : base(image, space)
+    {
+        Point fs = this.mRect.Width < 10 ? new(-3, -1) : new(0, -2);
+        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, fs), this);
+        titleText.Outline = true;
+        this.Add(titleText);
+        I._buttons.Add(this);
+    }
+
+    public override void Draw()
+    {
+        if (selected && enabled && Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released)
+        {
+            I.SpriteBatch.Draw(FriteCollection.Entity.Renderer.DefaultTexture,
+                new Microsoft.Xna.Framework.Rectangle(
+                    this.rect.X - 1,
+                    this.rect.Y - 1,
+                    this.rect.Width + 2,
+                    this.rect.Height + 2
+                    ),
+                null,
+                Microsoft.Xna.Framework.Color.White,
+                0,
+                Vector2.Zero,
+                SpriteEffects.None,
+                this.depth - 0.0001f);
+        }
+        base.Draw();
+    }
+}
+
+public class Toggle : ButtonCore
+{
+    public Procedure OnActivate;
+    public Procedure OnDeactivate;
+
+    private bool _on = false;
+
+    public void Set(bool value)
+    {
+        _on = value;
+    }
+
+    public bool On => _on;
+
+    public Toggle[] voisins = new Toggle[0];
+    public void Deactivate()
+    {
+        _on = false;
+        OnDeactivate();
+    }
+
+    public Toggle(TileSet tileset, Rectangle space, UI parent) : base(tileset, space, parent) { _fonction = OnClic; }
+    public Toggle(Texture2D image, Rectangle space, UI parent) : base(image, space, parent) { _fonction = OnClic; }
+    public Toggle(string title, TileSet tileset, Rectangle space, UI parent) : base(title, tileset, space, parent) { _fonction = OnClic; }
+    public Toggle(string title, Texture2D image, Rectangle space, UI parent) : base(title, image, space, parent) { _fonction = OnClic; }
+    public Toggle(TileSet tileset, Rectangle space) : base(tileset, space) { _fonction = OnClic; }
+    public Toggle(Texture2D image, Rectangle space) : base(image, space) { _fonction = OnClic; }
+    public Toggle(string title, TileSet tileset, Rectangle space) : base(title, tileset, space) { _fonction = OnClic; }
+    public Toggle(string title, Texture2D image, Rectangle space) : base(title, image, space) { _fonction = OnClic; }
+
+
+    private void OnClic()
+    {
+        foreach (Toggle tog in voisins)
+            tog.Deactivate();
+        _on = !_on;
+        if (_on)
+            OnActivate();
+        else
+            OnDeactivate();
+    }
+}
+
+public class Button : ButtonCore
+{
+    public Button(TileSet tileset, Rectangle space, UI parent) : base(tileset, space, parent) { }
+    public Button(Texture2D image, Rectangle space, UI parent) : base(image, space, parent) { }
+    public Button(TileSet tileset, Rectangle space) : base(tileset, space) { }
+    public Button(Texture2D image, Rectangle space) : base(image, space) { }
+    public Button(string title, TileSet tileset, Rectangle space, UI parent) : base(title, tileset, space, parent) { }
+    public Button(string title, Texture2D image, Rectangle space, UI parent) : base(title, image, space, parent) { }
+    public Button(string title, TileSet tileset, Rectangle space) : base(title, tileset, space) { }
+    public Button(string title, Texture2D image, Rectangle space) : base(title, image, space) { }
+
+    public Procedure Fonction
+    {
+        set
+        {
+            base._fonction = value;
+        }
+    }
+}

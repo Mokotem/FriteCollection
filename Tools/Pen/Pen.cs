@@ -16,7 +16,7 @@ namespace FriteCollection.Tools.Pen
         public static float layer;
         public static Graphics.Color Color = Graphics.Color.White;
         public static Bounds GridOrigin;
-        public static bool UI = false;
+        public static Environment environment;
 
         /// <summary>
         /// Draws a line from a point to an other
@@ -25,9 +25,7 @@ namespace FriteCollection.Tools.Pen
         {
             float th = thickness is null ? Pen.thickness : thickness.Value;
             Graphics.Color co = color is null ? Color : color;
-            Vector offset = UI ? GameManager.Instance.UIscreenBounds[(int)GridOrigin]
-                                     :
-                                     GameManager.Instance.screenBounds[(int)GridOrigin];
+            Vector offset = environment.bounds[(int)GridOrigin];
 
             GameManager.Instance.SpriteBatch.DrawLine
             (
@@ -51,9 +49,7 @@ namespace FriteCollection.Tools.Pen
         {
             float th = thickness is null ? Pen.thickness : thickness.Value;
             Graphics.Color co = color is null ? Color : color;
-            Vector offset = UI ? GameManager.Instance.UIscreenBounds[(int)GridOrigin]
-                         :
-                         GameManager.Instance.screenBounds[(int)GridOrigin];
+            Vector offset = environment.bounds[(int)GridOrigin];
 
             GameManager.Instance.SpriteBatch.DrawRectangle
             (
@@ -77,9 +73,7 @@ namespace FriteCollection.Tools.Pen
         {
             float th = thickness is null ? Pen.thickness : thickness.Value;
             Graphics.Color co = color is null ? Color : color;
-            Vector offset = UI ? GameManager.Instance.UIscreenBounds[(int)GridOrigin]
-                         :
-                         GameManager.Instance.screenBounds[(int)GridOrigin];
+            Vector offset = environment.bounds[(int)GridOrigin];
 
             GameManager.Instance.SpriteBatch.DrawCircle
             (
@@ -107,9 +101,7 @@ namespace FriteCollection.Tools.Pen
         {
             float th = thickness is null ? Pen.thickness : thickness.Value;
             Graphics.Color co = color is null ? Color : color;
-            Vector offset = UI ? GameManager.Instance.UIscreenBounds[(int)GridOrigin]
-                         :
-                         GameManager.Instance.screenBounds[(int)GridOrigin];
+            Vector offset = environment.bounds[(int)GridOrigin];
 
             GameManager.Instance.SpriteBatch.DrawPoint
             (

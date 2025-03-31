@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 
 namespace FriteCollection.Tools.TileMap;
 
@@ -10,7 +11,7 @@ public class TileSet : IDisposable
     private Hitbox.Rectangle[,] _hitReplaces;
     private Entity.Object[,] _entReplaces;
     public readonly List<Entity.Object> entities;
-    public List<int> _dontDraw = new List<int>();
+    public System.Collections.Generic.List<int> _dontDraw = new System.Collections.Generic.List<int>();
     public int Xlenght { get; private set; }
     public int Ylenght { get; private set; }
 
@@ -264,7 +265,7 @@ public class TileMap : IDisposable
 
     public Vector[] GetPos(ushort i, ushort j)
     {
-        List<Vector> result = new List<Vector>();
+        System.Collections.Generic.List<Vector> result = new System.Collections.Generic.List<Vector>();
         int target = i + j * _sheet.Xlenght;
         foreach (OgmoLayer layer in _file.layers)
         {

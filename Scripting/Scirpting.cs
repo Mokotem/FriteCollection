@@ -1,7 +1,8 @@
-﻿using FriteCollection.Entity;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace FriteCollection.Scripting;
@@ -9,14 +10,15 @@ namespace FriteCollection.Scripting;
 public static class Input
 {
     private static KeyboardState _kbstate, _prekbstate;
-    private static MouseState _mouseState;
+    private static MouseState _mouseState, _pMouseState;
 
     public static KeyboardState KB => _kbstate;
     public static KeyboardState KBP => _prekbstate;
 
     public static class Mouse
     {
-        public static MouseState Sate => _mouseState;
+        public static MouseState State => _mouseState;
+        public static MouseState StateP => _pMouseState;
 
         private static Bounds _origin = Bounds.Center;
         public static Bounds GridOrigin
@@ -28,19 +30,39 @@ public static class Input
             }
         }
 
-        public static Vector Position
+        public static Vector GetVectorPosition(in Environment envi)
         {
-            get
-            {
-                Vector v = BoundFunc.BoundToVector(_origin, Screen.widht, Screen.height);
-                return new Vector(_mouseState.Position.X - v.x, -_mouseState.Position.Y + v.y);
-            }
+            Vector offset = new Vector(-envi.rect.X, -envi.rect.Y);
+            offset += new Vector(State.Position.X, State.Position.Y);
+            return new Vector(offset.x / (envi.rect.Width / envi.target.Width), offset.y / (envi.rect.Height / envi.target.Height));
+        }
+        public static Vector GetVectorPosition(in Environment envi, Vector mouse)
+        {
+            Vector offset = new Vector(-envi.rect.X, -envi.rect.Y);
+            offset += mouse;
+            return new Vector(offset.x / (envi.rect.Width / envi.target.Width), offset.y / (envi.rect.Height / envi.target.Height));
+        }
+
+        public static Point GetPointPosition(in Environment envi)
+        {
+            Point offset = new Point(-envi.rect.X, -envi.rect.Y);
+            offset += new Point(State.Position.X, State.Position.Y);
+            return new Point(offset.i / (envi.rect.Width / envi.target.Width), offset.j / (envi.rect.Height / envi.target.Height));
+        }
+
+
+        public static Point GetPointPosition(in Environment envi, Point mouse)
+        {
+            Point offset = new Point(-envi.rect.X, -envi.rect.Y);
+            offset += mouse;
+            return new Point(offset.i / (envi.rect.Width / envi.target.Width), offset.j / (envi.rect.Height / envi.target.Height));
         }
     }
 
-    internal static void SetStates(KeyboardState kbs, MouseState mss)
+    public static void SetStates(KeyboardState kbs, MouseState mss)
     {
         _prekbstate = _kbstate;
+        _pMouseState = _mouseState;
         _kbstate = kbs;
         _mouseState = mss;
     }
@@ -119,21 +141,26 @@ public static class Time
         _frameTime = 1f / fps;
     }
 
-    /// <summary>
-    /// Temps écoulé visé depuis l'execution.
-    /// </summary>
-    public static double TargetTimer => GameManager.Instance._targetTimer;
+    internal static void UpdateGameTime(ref GameTime gt)
+    {
+        timer = gt.TotalGameTime.TotalMicroseconds / 1000000d;
+        dt = gt.ElapsedGameTime.TotalMicroseconds / 1000000d;
+        dtf = (float)gt.ElapsedGameTime.TotalMilliseconds / 1000f;
+    }
+
+    private static double timer, dt;
+    private static float dtf;
 
     /// <summary>
     /// Temps écoulé depuis l'execution.
     /// </summary>
-    public static double Timer => GameManager.Instance._timer; 
+    public static double Timer => timer;
 
     /// <summary>
     /// Temps écoulé depuis la dernière frame.
     /// </summary>
-    public static double Delta => GameManager.Instance._delta * _sp;
-    public static float DeltaF => (float)GameManager.Instance._delta * _sp;
+    public static double Delta => dt;
+    public static float DeltaF => dtf;
 }
 
 public abstract class Executable : IDisposable
@@ -170,17 +197,17 @@ public abstract class Executable : IDisposable
                 _currentScripts.Remove(this);
 
                 layer = value;
-                if (_currentScripts.Lenght == 0)
+                if (_currentScripts.Count == 0)
                     _currentScripts = new List<Executable>() { this };
                 else
                 {
-                    uint i = 0;
-                    while (i < _currentScripts.Lenght && _currentScripts[i].layer < this.layer)
+                    int i = 0;
+                    while (i < _currentScripts.Count && _currentScripts[i].layer < this.layer)
                     {
                         i++;
                     }
 
-                    _currentScripts.Add(this, i);
+                    _currentScripts.Insert(i, this);
                 }
             }
         }
@@ -196,10 +223,23 @@ public abstract class Executable : IDisposable
 
 public abstract class Script : Executable
 {
+    public virtual void OnWindowResize() { }
+
     public Script(object scene, bool active = true)
     {
         _attributedScenes = (int)scene;
         _active = active;
+        GameManager.Instance.Window.ClientSizeChanged += (object sender, EventArgs args) => { OnWindowResize(); };
+    }
+
+    public static Script GetScript<T>() where T: Script
+    {
+        foreach(Script s in GameManager.Instance.CurrentExecutables)
+        {
+            if (s.GetType().Name == typeof(T).Name)
+                return s as T;
+        }
+        throw new System.Exception("'" + typeof(T).Name + "' scripte n'existe pas dans cette scène.");
     }
 
     private readonly bool _active;
@@ -229,7 +269,7 @@ public abstract class Clone : Executable
 
     public static void DestroyAll(params Type[] exepts)
     {
-        foreach(Executable exe in GameManager.Instance.CurrentExecutables.Copy())
+        foreach(Executable exe in GameManager.Instance.CurrentExecutables.ToArray())
         {
             if (exe is Clone && !(exepts.Contains(exe.GetType().BaseType) || exepts.Contains(exe.GetType())))
             {

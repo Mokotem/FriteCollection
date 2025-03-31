@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using FriteCollection.Tools.TileMap;
-using FriteCollection.Scripting;
+using System.Collections.Generic;
 using System;
 
 namespace FriteCollection.UI;
@@ -9,35 +9,6 @@ namespace FriteCollection.UI;
 public enum Extend
 {
     Horizontal, Vertical, Full, None
-}
-
-public class Rectangle
-{
-    public Extend Extend = Extend.None;
-    public Point Position = Point.Zero;
-    public Point Scale = Point.Zero;
-    public Bounds Origin;
-
-    public Rectangle(Bounds origin, Extend extend)
-    {
-        this.Origin = origin;
-        this.Extend = extend;
-    }
-
-    public Rectangle(Bounds origin, Extend extend, Point scale)
-    {
-        this.Origin = origin;
-        this.Extend = extend;
-        this.Scale = scale;
-    }
-
-    public Rectangle(Bounds origin, Extend extend, Point scale, Point position)
-    {
-        this.Origin = origin;
-        this.Extend = extend;
-        this.Scale = scale;
-        this.Position = position;
-    }
 }
 
 public interface IEdit<T>
@@ -51,23 +22,125 @@ public interface IEdit<T>
 
 public abstract class UI : IDisposable
 {
+    internal float depth = 0.05f;
+    public class Rectangle
+    {
+        public Extend Extend = Extend.None;
+        public Point Position = Point.Zero;
+        public Point Scale = Point.Zero;
+        public Bounds Origin;
+        public static void SetDefaultEnvironment(ref readonly Environment env)
+        {
+            _defaultEnvironment = env;
+            _default = new Microsoft.Xna.Framework.Rectangle(0, 0, env.target.Width, env.target.Height);
+        }
+
+        private static Microsoft.Xna.Framework.Rectangle _default;
+        public static Microsoft.Xna.Framework.Rectangle Default => _default;
+
+        private static Environment _defaultEnvironment;
+        public static Environment DefaultEnvironment => _defaultEnvironment;
+
+        public readonly Environment environment;
+        public Microsoft.Xna.Framework.Rectangle EnviRect => this.environment.target.Bounds;
+
+        public Rectangle(Bounds origin, Extend extend)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.environment = _defaultEnvironment;
+        }
+
+        public Rectangle(Bounds origin, Extend extend, Point scale)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.Scale = scale;
+            this.environment = _defaultEnvironment;
+        }
+
+        public Rectangle(Bounds origin, Extend extend, Point scale, Point position)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.Scale = scale;
+            this.Position = position;
+            this.environment = _defaultEnvironment;
+        }
+
+        public Rectangle(byte env, Bounds origin, Extend extend)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.environment = GameManager.Envi[env];
+        }
+
+        public Rectangle(byte env, Bounds origin, Extend extend, Point scale)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.Scale = scale;
+            this.environment = GameManager.Envi[env];
+        }
+
+        public Rectangle(byte env, Bounds origin, Extend extend, Point scale, Point position)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.Scale = scale;
+            this.Position = position;
+            this.environment = GameManager.Envi[env];
+        }
+
+        public Rectangle(in Environment env, Bounds origin, Extend extend)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.environment = env;
+        }
+
+        public Rectangle(in Environment env, Bounds origin, Extend extend, Point scale)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.Scale = scale;
+            this.environment = env;
+        }
+
+        public Rectangle(in Environment env, Bounds origin, Extend extend, Point scale, Point position)
+        {
+            this.Origin = origin;
+            this.Extend = extend;
+            this.Scale = scale;
+            this.Position = position;
+            this.environment = env;
+        }
+    }
+
+    public virtual int PositionY
+    {
+        get => papa.Position.j;
+        set
+        {
+            space.Position.j = value;
+            ApplyPosition(papa is null ? space.EnviRect : papa.mRect);
+        }
+    }
+
+    public virtual Point Position
+    {
+        get => space.Position;
+        set
+        {
+            space.Position = value;
+            ApplyPosition(papa is null ? space.EnviRect : papa.mRect);
+        }
+    }
+
     public virtual void Dispose()
     {
         if (papa is not null)
             papa.Dispose();
-    }
-
-    private void OnWindowChange(bool full)
-    {
-        Screen = new Microsoft.Xna.Framework.Rectangle(0, 0,
-            FriteCollection.Screen.WindowWidth * GameManager.Settings.UICoef,
-            FriteCollection.Screen.WindowHeight * GameManager.Settings.UICoef);
-        ApplyPosition(papa is null ? Screen : papa.Rectangle);
-    }
-
-    public UI()
-    {
-        FriteModel.MonoGame.WindowChange += this.OnWindowChange;
     }
 
     private protected bool _active = true;
@@ -80,8 +153,7 @@ public abstract class UI : IDisposable
         set
         {
             space.Scale = value;
-            ApplyScale(papa is null ? Screen : papa.Rectangle);
-            ApplyPosition(papa is null ? Screen : papa.Rectangle);
+            ApplySpace(papa is null ? space.EnviRect : papa.mRect);
         }
     }
     public float alpha = 1f;
@@ -98,40 +170,37 @@ public abstract class UI : IDisposable
 
     private protected Microsoft.Xna.Framework.Rectangle rect;
 
-    public virtual Point Position
-    {
-        get => space.Position;
-        set
-        {
-            this.space.Position = value;
-            ApplyPosition(papa is null ? Screen : papa.Rectangle);
-        }
-    }
-
-    public virtual int PositionY
-    {
-        get => rect.Y;
-        set
-        {
-            this.space.Position.j = value;
-            ApplyPosition(papa is null ? Screen : papa.Rectangle);
-        }
-    }
-
     private protected List<UI> childs = new List<UI>();
     public void Add(UI element)
     {
+        element.depth = this.depth + 0.05f;
         childs.Add(element);
     }
+    public void FlexChilds(Point spacing, Point offset)
+    {
+        Point cursor = spacing + offset;
+        int maxHeight = -1;
+        foreach(UI u in childs)
+        {
+            if (cursor.i + u.rect.Width + spacing.i > this.rect.Width)
+            {
+                cursor.i = spacing.i;
+                cursor.j += maxHeight + spacing.j;
+                maxHeight = u.rect.Height;
+            }
+            if (u.rect.Height > maxHeight)
+                maxHeight = u.rect.Height;
+            u.Position = cursor;
+            cursor.i += u.rect.Width + spacing.i;
+        }
+    }
 
-    public Microsoft.Xna.Framework.Rectangle Rectangle => rect;
-    public static Microsoft.Xna.Framework.Rectangle Screen = new Microsoft.Xna.Framework.Rectangle
-(0, 0, FriteCollection.Screen.WindowWidth * GameManager.Settings.UICoef,
-      FriteCollection.Screen.WindowHeight * GameManager.Settings.UICoef);
+    public Microsoft.Xna.Framework.Rectangle mRect => rect;
 
     public Graphics.Color Color = Graphics.Color.White;
 
     private protected Rectangle space;
+    internal Rectangle Space => space;
 
     private protected void ApplyScale(Microsoft.Xna.Framework.Rectangle parent)
     {
@@ -160,9 +229,14 @@ public abstract class UI : IDisposable
 
         rect.Width += space.Scale.i;
         rect.Height += space.Scale.j;
+
+        foreach (UI e in childs)
+        {
+            e.ApplyScale(this.rect);
+        }
     }
 
-    private protected void ApplyPosition(Microsoft.Xna.Framework.Rectangle parent)
+    internal virtual void ApplyPosition(Microsoft.Xna.Framework.Rectangle parent)
     {
         switch ((int)space.Origin % 3)
         {
@@ -196,6 +270,11 @@ public abstract class UI : IDisposable
 
         rect.X += space.Position.i;
         rect.Y += space.Position.j;
+
+        foreach(UI e in childs)
+        {
+            e.ApplyPosition(this.rect);
+        }
     }
 
     private protected void ApplySpace(Microsoft.Xna.Framework.Rectangle parent)
@@ -204,254 +283,13 @@ public abstract class UI : IDisposable
         ApplyPosition(parent);
     }
 
+    public void ApplySpace()
+    {
+        ApplyScale(papa is null ? space.EnviRect : papa.mRect);
+        ApplyPosition(papa is null ? space.EnviRect : papa.mRect);
+    }
+
     public virtual void Draw() { }
-}
-
-public abstract class ButtonCore : UI
-{
-    private Text titleText;
-    private FriteModel.MonoGame I => GameManager.Instance;
-
-    private bool clic => GameManager.Instance.IsActive && _active && Input.Mouse.Sate.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed
-&& IsInRange(I.mouseClickedPosition)
-&& IsInRange(I.mousePosition)
-&& Time.TargetTimer >= 0.2f;
-
-    private bool IsInRange(Point pos) =>
-        GameManager.Instance.IsActive
-     && pos.i >= papa.Rectangle.X - 1 && pos.i < papa.Rectangle.X + papa.Rectangle.Width + 1
-     && pos.j >= papa.Rectangle.Y - 1 && pos.j < papa.Rectangle.Y + papa.Rectangle.Height + 1;
-
-    private protected bool selected = false;
-    private bool previousClic = false;
-
-    private protected Procedure _fonction;
-
-    public override void Dispose()
-    {
-        I.buttons.Remove(this);
-        _fonction = null;
-        papa.Dispose();
-        if (titleText is not null)
-        {
-            titleText.Dispose();
-        }
-    }
-
-    internal void Update()
-    {
-        if (_active)
-        {
-            selected = IsInRange(I.mousePosition);
-
-            if (clic)
-            {
-                papa.Color = new Graphics.Color(0.7f, 0.7f, 0.7f);
-                if (titleText is not null)
-                    titleText.Color = new Graphics.Color(0.7f, 0.7f, 0.7f);
-            }
-            else
-            {
-                papa.Color = Graphics.Color.White;
-                if (titleText is not null)
-                    titleText.Color = Graphics.Color.White;
-
-                if (previousClic == true && _fonction is not null && IsInRange(I.mousePosition))
-                {
-                    I.previousMouseLeft = false;
-                    _fonction();
-                }
-            }
-        }
-
-        previousClic = clic;
-    }
-
-    public override int PositionY
-    {
-        get => papa.Position.j;
-        set
-        {
-            papa.PositionY = value;
-            titleText.SetPar(papa.Rectangle);
-            titleText.PositionY = 0;
-        }
-    }
-
-    public string EditText
-    {
-        set
-        {
-            if (titleText is null)
-            {
-                titleText = new Text(value, new Rectangle(Bounds.Center, Extend.Full), papa);
-                papa.Add(titleText);
-            }
-            else
-                titleText.Edit = value;
-        }
-    }
-
-    public ButtonCore(TileSet tileset, Rectangle space, UI parent) : base()
-    {
-        papa = new Panel(tileset, space, parent);
-        I.buttons.Add(this);
-    }
-
-
-    public ButtonCore(TileSet tileset, Rectangle space) : base()
-    {
-        papa = new Panel(tileset, space);
-        I.buttons.Add(this);
-    }
-
-    public ButtonCore(Texture2D image, Rectangle space, UI parent) : base()
-    {
-        papa = new Image(image, space, parent);
-        I.buttons.Add(this);
-    }
-
-    public ButtonCore(string title, TileSet tileset, Rectangle space, UI parent) : base()
-    {
-        papa = new Panel(tileset, space, parent);
-        titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
-        papa.Add(titleText);
-        I.buttons.Add(this);
-    }
-
-    public ButtonCore(string title, Texture2D image, Rectangle space, UI parent) : base()
-    {
-        papa = new Image(image, space, parent);
-        titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
-        papa.Add(titleText);
-        I.buttons.Add(this);
-    }
-
-    public ButtonCore(Texture2D image, Rectangle space) : base()
-    {
-        papa = new Image(image, space);
-        I.buttons.Add(this);
-    }
-
-    public ButtonCore(string title, TileSet tileset, Rectangle space) : base()
-    {
-        papa = new Panel(tileset, space);
-        titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
-        papa.Add(titleText);
-        I.buttons.Add(this);
-    }
-
-    public ButtonCore(string title, Texture2D image, Rectangle space) : base()
-    {
-        papa = new Image(image, space);
-        titleText = new Text(title, new Rectangle(Bounds.Center, Extend.Full), papa);
-        papa.Add(titleText);
-        I.buttons.Add(this);
-    }
-}
-
-public class Toggle : ButtonCore
-{
-    public Procedure OnActivate;
-    public Procedure OnDeactivate;
-
-    private bool _on = false;
-
-    public void Set(bool value)
-    {
-        _on = value;
-    }
-
-    public bool On => _on;
-
-    public Toggle[] voisins = new Toggle[0];
-    public void Deactivate()
-    {
-        _on = false;
-        OnDeactivate();
-    }
-
-    public Toggle(TileSet tileset, Rectangle space, UI parent) : base(tileset, space, parent) { _fonction = OnClic; }
-    public Toggle(Texture2D image, Rectangle space, UI parent) : base(image, space, parent) { _fonction = OnClic; }
-    public Toggle(string title, TileSet tileset, Rectangle space, UI parent) : base(title, tileset, space, parent) { _fonction = OnClic; }
-    public Toggle(string title, Texture2D image, Rectangle space, UI parent) : base(title, image, space, parent) { _fonction = OnClic; }
-    public Toggle(TileSet tileset, Rectangle space) : base(tileset, space) { _fonction = OnClic; }
-    public Toggle(Texture2D image, Rectangle space) : base(image, space) { _fonction = OnClic; }
-    public Toggle(string title, TileSet tileset, Rectangle space) : base(title, tileset, space) { _fonction = OnClic; }
-    public Toggle(string title, Texture2D image, Rectangle space) : base(title, image, space) { _fonction = OnClic; }
-
-
-    private void OnClic()
-    {
-        foreach(Toggle tog in voisins)
-            tog.Deactivate();
-        _on = !_on;
-        if (_on)
-            OnActivate();
-        else
-            OnDeactivate();
-    }
-
-    public override void Draw()
-    {
-        if (_active)
-        {
-            if (_on)
-            {
-                GameManager.Instance.SpriteBatch.Draw
-                    (Entity.Renderer._defaultTexture, new Microsoft.Xna.Framework.Rectangle(
-                        papa.Rectangle.X - 1,
-                    papa.Rectangle.Y - 1, papa.Rectangle.Width + 2, papa.Rectangle.Height + 2),
-                    Microsoft.Xna.Framework.Color.White);
-            }
-            papa.Draw();
-        }
-    }
-}
-
-public class Button : ButtonCore
-{
-    public Button(TileSet tileset, Rectangle space, UI parent) : base(tileset, space, parent) { }
-    public Button(Texture2D image, Rectangle space, UI parent) : base(image, space, parent) { }
-    public Button(string title, TileSet tileset, Rectangle space, UI parent) : base(title, tileset, space, parent) { }
-    public Button(string title, Texture2D image, Rectangle space, UI parent) : base(title, image, space, parent) { }
-    public Button(TileSet tileset, Rectangle space) : base(tileset, space) { }
-    public Button(Texture2D image, Rectangle space) : base(image, space) { }
-    public Button(string title, TileSet tileset, Rectangle space) : base(title, tileset, space) { }
-    public Button(string title, Texture2D image, Rectangle space) : base(title, image, space) { }
-
-    public Procedure Fonction
-    {
-        set
-        {
-            base._fonction = value;
-        }
-    }
-
-    public override void Draw()
-    {
-        if (_active)
-        {
-            if (selected && Input.Mouse.Sate.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released)
-            {
-                GameManager.Instance.SpriteBatch.Draw
-                    (Entity.Renderer._defaultTexture, new Microsoft.Xna.Framework.Rectangle(
-                        papa.Rectangle.X - 1,
-                    papa.Rectangle.Y - 1, papa.Rectangle.Width + 2, papa.Rectangle.Height + 2),
-                    Microsoft.Xna.Framework.Color.White);
-            }
-            papa.Draw();
-        }
-    }
-
-    public override void Dispose()
-    {
-        if (papa is not null)
-        {
-            papa.Dispose();
-            papa = null;
-        }
-    }
 }
 
 public class Image : UI, IEdit<Texture2D>
@@ -468,23 +306,30 @@ public class Image : UI, IEdit<Texture2D>
     {
         this.image = image;
         this.space = space;
-        base.ApplyScale(Screen);
-        base.ApplyPosition(Screen);
+        base.ApplyScale(space.EnviRect);
+        base.ApplyPosition(space.EnviRect);
     }
 
     public Image(Texture2D image, Rectangle space, UI parent) : base()
     {
         this.image = image;
         this.space = space;
-        base.ApplyScale(parent.Rectangle);
-        base.ApplyPosition(parent.Rectangle);
+        base.ApplyScale(parent.mRect);
+        base.ApplyPosition(parent.mRect);
+        this.depth = parent.depth + 0.05f;
     }
 
     public override void Draw()
     {
         if (_active)
         {
-            GameManager.Instance.SpriteBatch.Draw(image, rect, this.Color.ToMonogameColor() * alpha);
+            GameManager.Instance.SpriteBatch.Draw(
+                image,
+                rect,
+                null,
+                this.Color.ToMonogameColor() * alpha,
+                0, Vector2.Zero, SpriteEffects.None,
+                this.depth);
             foreach (UI element in childs)
                 element.Draw();
         }
@@ -506,6 +351,15 @@ public class Text : UI, IEdit<string>
     private string text;
     public bool Outline;
 
+    private static Point fontaspect;
+    public static void SetFontAspect(Point p)
+    {
+        fontaspect = p;
+        HasFontAspect = true;
+    }
+
+    private static bool HasFontAspect = false;
+
     public float Size { get; set; }
 
     public string Edit
@@ -515,19 +369,16 @@ public class Text : UI, IEdit<string>
         {
             if (value != text)
             {
-                int posy = rect.Y;
                 this.text = value;
-                ApplyScale(par);
                 ApplyText(value);
                 ApplyPosition(par);
-                rect.Y = posy;
             }
         }
     }
 
-    public void SetPar(Microsoft.Xna.Framework.Rectangle rect)
+    public void SetPar(Microsoft.Xna.Framework.Rectangle rect1)
     {
-        par = rect;
+        par = rect1;
     }
 
     public override int PositionY
@@ -545,7 +396,9 @@ public class Text : UI, IEdit<string>
         text = "";
         string[] txt = input.Split(" ");
         int i = 0;
-        if (txt.Length < 2 || rect.Width < 2)
+        Point s = Point.Zero;
+        int ln = 1;
+        if (txt.Length < 2 || par.Width < 2)
         {
             text = input;
         }
@@ -554,40 +407,65 @@ public class Text : UI, IEdit<string>
             while (i < txt.Length)
             {
                 string line = "";
-                while (GameManager.Font.MeasureString(line).X < rect.Width)
+                if (HasFontAspect)
                 {
-                    line += txt[i] + " ";
-                    i += 1;
+                    while (i < txt.Length && line.Length * fontaspect.i < par.Width)
+                    {
+                        s.i += fontaspect.i;
+                        line += txt[i] + " ";
+                        i += 1;
+                    }
+                }
+                else
+                {
+                    while (i < txt.Length && GameManager.Font.MeasureString(line).X < par.Width)
+                    {
+                        line += txt[i] + " ";
+                        i += 1;
+                    }
                 }
                 text += line + "\n";
+                ln += 1;
+                s.j += fontaspect.j;
             }
+            ln += -1;
         }
 
-        Vector2 s = GameManager.Font.MeasureString(text);
-        rect.Width = (int)s.X;
-        rect.Height = (int)s.Y;
+        if (HasFontAspect)
+        {
+            rect.Width = ((text.Length - 2) * fontaspect.i);
+            rect.Height = fontaspect.j * ln - 2;
+        }
+        else
+        {
+            Vector2 fa = GameManager.Font.MeasureString(text);
+            rect.Width = (int)fa.X;
+            rect.Height = (int)fa.Y;
+        }
     }
 
     public Text(string txt, Rectangle space) : base()
     {
         this.Size = 1f;
         this.space = space;
-        base.ApplyScale(Screen);
+        base.ApplyScale(space.EnviRect);
         ApplyText(txt);
-        base.ApplyPosition(Screen);
-        par = Screen;
+        base.ApplyPosition(space.EnviRect);
+        par = space.EnviRect;
         Outline = false;
     }
 
     public Text(string txt, Rectangle space, UI parent) : base()
     {
+        this.papa = parent;
         this.Size = 1f;
         this.space = space;
-        base.ApplyScale(parent.Rectangle);
+        base.ApplyScale(parent.mRect);
         ApplyText(txt);
-        base.ApplyPosition(parent.Rectangle);
-        par = parent.Rectangle;
+        base.ApplyPosition(parent.mRect);
+        par = parent.mRect;
         Outline = false;
+        this.depth = parent.depth + 0.05f;
     }
 
     public override void Draw()
@@ -613,21 +491,20 @@ public class Text : UI, IEdit<string>
                     GameManager.Instance.SpriteBatch.DrawString
                     (GameManager.Font, text, new Vector2(rect.X + r.X, rect.Y + r.Y),
                     Microsoft.Xna.Framework.Color.Black * alpha, 0, Vector2.Zero, Size,
-                    SpriteEffects.None, 0);
+                    SpriteEffects.None, this.depth);
                 }
             }
-            GameManager.Instance.SpriteBatch.DrawString
-                (GameManager.Font, text, new Vector2(rect.X, rect.Y),
-                this.GetColor(), 0, Vector2.Zero, Size,
-                SpriteEffects.None, 0);
         }
+        GameManager.Instance.SpriteBatch.DrawString
+                    (GameManager.Font, text, new Vector2(rect.X, rect.Y),
+                    this.Color.ToMonogameColor() * alpha, 0, Vector2.Zero, Size,
+                    SpriteEffects.None, this.depth + 0.0001f);
     }
 }
 
 
 public class Panel : UI, IDisposable, IEdit<Texture2D>
 {
-    private TileSet tileSet;
     private Texture2D texture;
     private RenderTarget2D rt;
 
@@ -704,16 +581,6 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
         return rt;
     }
 
-    public override int PositionY
-    {
-        get => papa.Position.j;
-        set
-        {
-            space.Position.j = value;
-            ApplyPosition(papa is null ? Screen : papa.Rectangle);
-        }
-    }
-
     public void Clear()
     {
         foreach(UI c in childs)
@@ -726,29 +593,47 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
     public Panel(Rectangle space) : base()
     {
         this.space = space;
-        ApplySpace(Screen);
+        ApplySpace(space.EnviRect);
     }
 
     public Panel(Rectangle space, UI parent) : base()
     {
+        this.papa = parent;
         this.space = space;
-        ApplySpace(parent.Rectangle);
+        ApplySpace(parent.mRect);
+        this.depth = parent.depth + 0.05f;
     }
 
     public Panel(TileSet tileSet, Rectangle space) : base()
     {
         this.space = space;
-        this.tileSet = tileSet;
-        ApplySpace(Screen);
-        this.texture = CreatePanelTexture(tileSet, space.Scale);
+        ApplySpace(space.EnviRect);
+        this.texture = CreatePanelTexture(tileSet, new Point(rect.Width, rect.Height));
     }
 
     public Panel(TileSet tileSet, Rectangle space, UI parent) : base()
     {
+        this.papa = parent;
         this.space = space;
-        this.tileSet = tileSet;
-        ApplySpace(parent.Rectangle);
-        this.texture = CreatePanelTexture(tileSet, space.Scale);
+        ApplySpace(parent.mRect);
+        this.texture = CreatePanelTexture(tileSet, new Point(rect.Width, rect.Height));
+        this.depth = parent.depth + 0.05f;
+    }
+
+    public Panel(Texture2D image, Rectangle space) : base()
+    {
+        this.space = space;
+        ApplySpace(space.EnviRect);
+        this.texture = image;
+    }
+
+    public Panel(Texture2D image, Rectangle space, UI parent) : base()
+    {
+        this.papa = parent;
+        this.space = space;
+        ApplySpace(parent.mRect);
+        this.texture = image;
+        this.depth = parent.depth + 0.05f;
     }
 
     public override void Draw()
@@ -757,7 +642,8 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
         {
             if (texture != null)
                 GameManager.Instance.SpriteBatch.Draw
-                 (texture, rect, new(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B));
+                 (texture, rect, null, new(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B),
+                 0, Vector2.Zero, SpriteEffects.None, this.depth);
             foreach (UI element in childs)
                 element.Draw();
         }

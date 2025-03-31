@@ -42,6 +42,14 @@ namespace FriteCollection.Tools.SpriteSheet
             }
         }
 
+        public Texture2D this[Point p]
+        {
+            get
+            {
+                return textures[p.i, p.j];
+            }
+        }
+
         public void Dispose()
         {
             foreach (Texture2D tex in textures)

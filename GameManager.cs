@@ -32,7 +32,7 @@ public class Settings
 public static class GameManager
 {
     private static FriteModel.MonoGame _nstnc;
-    internal static void SetGameInstance(FriteModel.MonoGame _instance)
+    public static void SetGameInstance(FriteModel.MonoGame _instance)
     {
         _nstnc = _instance;
     }
@@ -48,7 +48,14 @@ public static class GameManager
         set => _nstnc.FullScreen = value;
     }
 
+    public static Environment[] Envi => _nstnc.Environments;
+
     internal static FriteModel.MonoGame Instance => _nstnc;
+
+    public static void UpdateEnvironments()
+    {
+        _nstnc.FullScreen = _nstnc.FullScreen;
+    }
     
     private static Settings _settings;
     
@@ -63,8 +70,9 @@ public static class GameManager
         }
     }
 
+    public static GraphicsDevice GraphicsDevice => _nstnc.GraphicsDevice;
 
-    internal static Settings Settings => _settings;
+    public static Settings Settings => _settings;
 
     private static SpriteFont _font;
     public static SpriteFont Font => _font;
@@ -129,10 +137,10 @@ public static class SaveManager
 {
     private const string foldername = "BallBallGame";
     private static readonly string folder = Path.Combine
-        (Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        (System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData),
         @foldername);
     private static readonly string path = Path.Combine
-        (Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        (System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData),
         @"BallBallGame\Save_BallBallGame.json");
     private static FileInfo _info;
 
@@ -234,12 +242,8 @@ public static class Screen
     public static Graphics.Color backGround = new(0.1f, 0.2f, 0.3f);
 
     internal static int rww, rwh;
-    public static int RealWindowWidth => rww;
-    public static int RealWindowHeight => rwh;
+    public static int WindowWidth => rww;
+    public static int WindowHeight => rwh;
 
     public static readonly int widht = GameManager.Settings.GameFixeWidth, height = GameManager.Settings.GameFixeHeight;
-    public static int WindowWidth => GameManager.Instance.targetGameRectangle.Width;
-    public static int WindowHeight => GameManager.Instance.targetGameRectangle.Height;
-    public static int UserWidth => GameManager.Instance.display.Width;
-    public static int UserHeight => GameManager.Instance.display.Height;
 }

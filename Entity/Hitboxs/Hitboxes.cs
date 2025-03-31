@@ -1,6 +1,7 @@
 ﻿using MonoGame.Extended;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace FriteCollection.Entity.Hitboxs;
 
@@ -336,7 +337,7 @@ public abstract class Hitbox
         public Collision[] AdvancedCheck(
                 string tag = null)
         {
-            List<Collision> result = new List<Collision>();
+            System.Collections.Generic.List<Collision> result = new System.Collections.Generic.List<Collision>();
             this.UpdatePos();
             foreach (Hitbox col in _hitBoxesList[_layer])
             {
@@ -849,7 +850,7 @@ public abstract class Hitbox
             string tag = null)
         {
             this.UpdatePos();
-            List<Collision> cols = new List<Collision>();
+            System.Collections.Generic.List<Collision> cols = new System.Collections.Generic.List<Collision>();
             side = Sides.None;
 
             bool[] global = new bool[4] { false, false, false, false };
