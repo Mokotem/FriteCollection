@@ -1,5 +1,4 @@
-﻿using FriteCollection.Graphics;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
@@ -30,8 +29,8 @@ public class Space : ICopy<Space>
     {
         _eGridOrigin = Bounds.Center;
         _eCenterPoint = Bounds.Center;
-        Position = Vector.Zero;
-        Scale = new Vector(50, 50);
+        Position = Vector2.Zero;
+        Scale = new Vector2(50, 50);
         rotation = 0;
     }
 
@@ -60,14 +59,14 @@ public class Space : ICopy<Space>
         };
     }
 
-    internal Vector GetScreenPosition()
+    internal Vector2 GetScreenPosition()
     {
         return
-            new Vector(
-                (Position.x - Camera.Position.x) * Camera.zoom
-                + environment.bounds[(int)GridOrigin].x,
-                -((Position.y - Camera.Position.y) * Camera.zoom)
-                + environment.bounds[(int)GridOrigin].y);
+            new Vector2(
+                (Position.X - Camera.Position.X) * Camera.zoom
+                + environment.Bounds[(int)GridOrigin].X,
+                -((Position.Y - Camera.Position.Y) * Camera.zoom)
+                + environment.Bounds[(int)GridOrigin].Y);
     }
 
     private Bounds _eGridOrigin;
@@ -101,13 +100,13 @@ public class Space : ICopy<Space>
     /// <summary>
     /// Position.
     /// </summary>
-    public Vector Position;
+    public Vector2 Position;
 
     /// <summary>
     /// Taille.
     /// </summary>
     /// <remarks>Les tailles négatives sont prises en charges.</remarks>
-    public Vector Scale;
+    public Vector2 Scale;
 
     /// <summary>
     /// Rotation.
@@ -136,29 +135,29 @@ public class Space : ICopy<Space>
 
 internal static class BoundFunc
 {
-    internal static Vector BoundToVector(Bounds b, float width, float height)
+    internal static Vector2 BoundToVector(Bounds b, float width, float height)
     {
         return b switch
         {
-            Bounds.TopLeft => new Vector(0, 0),
-            Bounds.Top => new Vector(width / 2f, 0),
-            Bounds.TopRight => new Vector(width, 0),
+            Bounds.TopLeft => new Vector2(0, 0),
+            Bounds.Top => new Vector2(width / 2f, 0),
+            Bounds.TopRight => new Vector2(width, 0),
 
-            Bounds.Left => new Vector(0, height / 2f),
-            Bounds.Center => new Vector(width / 2f, height / 2f),
-            Bounds.Right => new Vector(width, height / 2f),
+            Bounds.Left => new Vector2(0, height / 2f),
+            Bounds.Center => new Vector2(width / 2f, height / 2f),
+            Bounds.Right => new Vector2(width, height / 2f),
 
-            Bounds.BottomLeft => new Vector(0, height),
-            Bounds.Bottom => new Vector(width / 2f, height),
-            Bounds.BottomRight => new Vector(width, height),
+            Bounds.BottomLeft => new Vector2(0, height),
+            Bounds.Bottom => new Vector2(width / 2f, height),
+            Bounds.BottomRight => new Vector2(width, height),
 
-            _ => new Vector(0, 0)
+            _ => new Vector2(0, 0)
         };
     }
 
-    internal static Vector[] CreateBounds(float width, float height)
+    internal static Vector2[] CreateBounds(float width, float height)
     {
-        Vector[] vList = new Vector[9];
+        Vector2[] vList = new Vector2[9];
         for (int i = 0; i < 9; i++)
         {
             vList[i] = BoundToVector((Bounds)i, width, height);
@@ -299,19 +298,19 @@ public class Renderer : ICopy<Renderer>
         Renderer r = new()
         {
             _texture = _defaultTexture,
-            Color = Color.Copy(),
+            Color = this.Color,
             hide = hide
         };
         return r;
     }
 
-    private Vector[] _bounds;
+    private Vector2[] _bounds;
 
     /// <summary>
     /// Gets the 9 bounds of the texture
     /// </summary>
     /// <returns>an array of 9 Vector</returns>
-    internal Vector[] GetTextureBounds()
+    internal Vector2[] GetTextureBounds()
     {
         return _bounds;
     }
@@ -334,10 +333,7 @@ public class Renderer : ICopy<Renderer>
         }
     }
 
-    /// <summary>
-    /// Color.
-    /// </summary>
-    public Graphics.Color Color = new(255, 255, 255);
+    public Color Color = new(255, 255, 255);
 
     /// <summary>
     /// Masquer.
@@ -359,8 +355,8 @@ public class Renderer : ICopy<Renderer>
     {
         if (Texture is null)
         {
-            return "Renderer (texture: NULL, color:" + Color.RGB.ToString() + ")";
+            return "Renderer (texture: NULL, color:" + Color.ToString() + ")";
         }
-        else { return "Renderer (texture: true, color:" + Color.RGB.ToString() + ")"; }
+        else { return "Renderer (texture: true, color:" + Color.ToString() + ")"; }
     }
 }

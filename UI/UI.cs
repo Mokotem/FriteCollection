@@ -29,10 +29,10 @@ public abstract class UI : IDisposable
         public Point Position = Point.Zero;
         public Point Scale = Point.Zero;
         public Bounds Origin;
-        public static void SetDefaultEnvironment(ref readonly Environment env)
+        public static void SetDefaultEnvironment(in Environment env)
         {
             _defaultEnvironment = env;
-            _default = new Microsoft.Xna.Framework.Rectangle(0, 0, env.target.Width, env.target.Height);
+            _default = new Microsoft.Xna.Framework.Rectangle(0, 0, env.Target.Width, env.Target.Height);
         }
 
         private static Microsoft.Xna.Framework.Rectangle _default;
@@ -42,7 +42,7 @@ public abstract class UI : IDisposable
         public static Environment DefaultEnvironment => _defaultEnvironment;
 
         public readonly Environment environment;
-        public Microsoft.Xna.Framework.Rectangle EnviRect => this.environment.target.Bounds;
+        public Microsoft.Xna.Framework.Rectangle EnviRect => this.environment.Target.Bounds;
 
         public Rectangle(Bounds origin, Extend extend)
         {
@@ -119,10 +119,10 @@ public abstract class UI : IDisposable
 
     public virtual int PositionY
     {
-        get => papa.Position.j;
+        get => papa.Position.Y;
         set
         {
-            space.Position.j = value;
+            space.Position.Y = value;
             ApplyPosition(papa is null ? space.EnviRect : papa.mRect);
         }
     }
@@ -157,10 +157,6 @@ public abstract class UI : IDisposable
         }
     }
     public float alpha = 1f;
-    private protected Microsoft.Xna.Framework.Color GetColor()
-    {
-        return new Color(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B) * alpha;
-    }
 
     public bool Active
     {
@@ -171,6 +167,8 @@ public abstract class UI : IDisposable
     private protected Microsoft.Xna.Framework.Rectangle rect;
 
     private protected List<UI> childs = new List<UI>();
+    public UI[] Childs => childs.ToArray();
+
     public void Add(UI element)
     {
         element.depth = this.depth + 0.05f;
@@ -182,22 +180,22 @@ public abstract class UI : IDisposable
         int maxHeight = -1;
         foreach(UI u in childs)
         {
-            if (cursor.i + u.rect.Width + spacing.i > this.rect.Width)
+            if (cursor.X + u.rect.Width + spacing.X > this.rect.Width)
             {
-                cursor.i = spacing.i;
-                cursor.j += maxHeight + spacing.j;
+                cursor.X= spacing.X;
+                cursor.Y += maxHeight + spacing.Y;
                 maxHeight = u.rect.Height;
             }
             if (u.rect.Height > maxHeight)
                 maxHeight = u.rect.Height;
             u.Position = cursor;
-            cursor.i += u.rect.Width + spacing.i;
+            cursor.X+= u.rect.Width + spacing.X;
         }
     }
 
     public Microsoft.Xna.Framework.Rectangle mRect => rect;
 
-    public Graphics.Color Color = Graphics.Color.White;
+    public Color Color = Color.White;
 
     private protected Rectangle space;
     internal Rectangle Space => space;
@@ -227,8 +225,8 @@ public abstract class UI : IDisposable
                 break;
         }
 
-        rect.Width += space.Scale.i;
-        rect.Height += space.Scale.j;
+        rect.Width += space.Scale.X;
+        rect.Height += space.Scale.Y;
 
         foreach (UI e in childs)
         {
@@ -268,8 +266,8 @@ public abstract class UI : IDisposable
                 break;
         }
 
-        rect.X += space.Position.i;
-        rect.Y += space.Position.j;
+        rect.X += space.Position.X;
+        rect.Y += space.Position.Y;
 
         foreach(UI e in childs)
         {
@@ -327,7 +325,7 @@ public class Image : UI, IEdit<Texture2D>
                 image,
                 rect,
                 null,
-                this.Color.ToMonogameColor() * alpha,
+                this.Color * alpha,
                 0, Vector2.Zero, SpriteEffects.None,
                 this.depth);
             foreach (UI element in childs)
@@ -383,10 +381,10 @@ public class Text : UI, IEdit<string>
 
     public override int PositionY
     {
-        get => papa.Position.j;
+        get => papa.Position.Y;
         set
         {
-            space.Position.j = value;
+            space.Position.Y = value;
             ApplyPosition(par);
         }
     }
@@ -409,9 +407,9 @@ public class Text : UI, IEdit<string>
                 string line = "";
                 if (HasFontAspect)
                 {
-                    while (i < txt.Length && line.Length * fontaspect.i < par.Width)
+                    while (i < txt.Length && line.Length * fontaspect.X< par.Width)
                     {
-                        s.i += fontaspect.i;
+                        s.X+= fontaspect.X;
                         line += txt[i] + " ";
                         i += 1;
                     }
@@ -426,15 +424,15 @@ public class Text : UI, IEdit<string>
                 }
                 text += line + "\n";
                 ln += 1;
-                s.j += fontaspect.j;
+                s.Y += fontaspect.Y;
             }
             ln += -1;
         }
 
         if (HasFontAspect)
         {
-            rect.Width = ((text.Length - 2) * fontaspect.i);
-            rect.Height = fontaspect.j * ln - 2;
+            rect.Width = ((text.Length - 2) * fontaspect.X);
+            rect.Height = fontaspect.Y * ln - 2;
         }
         else
         {
@@ -497,7 +495,7 @@ public class Text : UI, IEdit<string>
         }
         GameManager.Instance.SpriteBatch.DrawString
                     (GameManager.Font, text, new Vector2(rect.X, rect.Y),
-                    this.Color.ToMonogameColor() * alpha, 0, Vector2.Zero, Size,
+                    this.Color * alpha, 0, Vector2.Zero, Size,
                     SpriteEffects.None, this.depth + 0.0001f);
     }
 }
@@ -518,23 +516,23 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
         TileSet set,
         Point size)
     {
-        int sx = set.TileSize.i;
-        int sy = set.TileSize.j;
-        if (size.i < sx * 2)
+        int sx = set.TileSize.X;
+        int sy = set.TileSize.Y;
+        if (size.X< sx * 2)
         {
-            sx = size.i / 2;
+            sx = size.X/ 2;
         }
-        if (size.j < sy * 2)
+        if (size.Y < sy * 2)
         {
-            sy = size.j / 2;
+            sy = size.Y / 2;
         }
 
         GraphicsDevice gd = GameManager.Instance.GraphicsDevice;
         SpriteBatch sb = GameManager.Instance.SpriteBatch;
-        RenderTarget2D rt = new RenderTarget2D(gd, size.i, size.j);
+        RenderTarget2D rt = new RenderTarget2D(gd, size.X, size.Y);
 
         gd.SetRenderTarget(rt);
-        gd.Clear(Microsoft.Xna.Framework.Color.Transparent);
+        gd.Clear(Color.Transparent);
         sb.Begin(samplerState: SamplerState.PointClamp);
 
         for (int x = 0; x < 3; x++)
@@ -543,7 +541,7 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
             if (x == 0 || x == 2)
                 width = sx;
             else
-                width = size.i - (sx * GameManager.Settings.UICoef);
+                width = size.X - (sx * GameManager.Settings.UICoef);
 
             int posX;
             if (x == 0)
@@ -551,7 +549,7 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
             else if (x == 1)
                 posX = sx;
             else
-                posX = size.i - sx;
+                posX = size.X - sx;
 
 
             for (int y = 0; y < 3; y++)
@@ -560,7 +558,7 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
                 if (y == 0 || y == 2)
                     height = sy;
                 else
-                    height = size.j - (sy * GameManager.Settings.UICoef);
+                    height = size.Y - (sy * GameManager.Settings.UICoef);
 
                 int posY;
                 if (y == 0)
@@ -568,7 +566,7 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
                 else if (y == 1)
                     posY = sy;
                 else
-                    posY = size.j - sy;
+                    posY = size.Y - sy;
 
                 sb.Draw(set.Texture,
                     new Microsoft.Xna.Framework.Rectangle(posX, posY, width, height),
@@ -642,7 +640,7 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
         {
             if (texture != null)
                 GameManager.Instance.SpriteBatch.Draw
-                 (texture, rect, null, new(this.Color.RGB.R, this.Color.RGB.G, this.Color.RGB.B),
+                 (texture, rect, null, Color,
                  0, Vector2.Zero, SpriteEffects.None, this.depth);
             foreach (UI element in childs)
                 element.Draw();

@@ -11,7 +11,7 @@ public class TileSet : IDisposable
     private Hitbox.Rectangle[,] _hitReplaces;
     private Entity.Object[,] _entReplaces;
     public readonly List<Entity.Object> entities;
-    public System.Collections.Generic.List<int> _dontDraw = new System.Collections.Generic.List<int>();
+    public List<int> _dontDraw = new List<int>();
     public int Xlenght { get; private set; }
     public int Ylenght { get; private set; }
 
@@ -55,10 +55,10 @@ public class TileSet : IDisposable
     private void Apply()
     {
         Xlenght =
-        (sheet.i + _tileSeparation.i) / (_tileSize.i + _tileSeparation.i);
+        (sheet.X + _tileSeparation.X) / (_tileSize.X + _tileSeparation.X);
 
         Ylenght =
-            (sheet.j + _tileSeparation.j) / (_tileSize.j + _tileSeparation.j);
+            (sheet.Y + _tileSeparation.Y) / (_tileSize.Y + _tileSeparation.Y);
 
         _hitReplaces = new Hitbox.Rectangle[Xlenght, Ylenght];
         _entReplaces = new Entity.Object[Xlenght, Ylenght];
@@ -101,15 +101,15 @@ public class TileSet : IDisposable
         // PETETRE UN BUG LA !!!
         Point positon = new Point
         (
-            index * (_tileSize.i + _tileSeparation.i) % (sheet.i + _tileSeparation.i),
-            (index / ((sheet.i + _tileSeparation.i) / (_tileSize.i + _tileSeparation.i))) * (_tileSize.j + _tileSeparation.j)
+            index * (_tileSize.X + _tileSeparation.X) % (sheet.X + _tileSeparation.X),
+            (index / ((sheet.X + _tileSeparation.X) / (_tileSize.X + _tileSeparation.X))) * (_tileSize.Y + _tileSeparation.Y)
         );
         return new Rectangle
         (
-            positon.i,
-            positon.j,
-            _tileSize.i,
-            _tileSize.j
+            positon.X,
+            positon.Y,
+            _tileSize.X,
+            _tileSize.Y
         );
     }
 
@@ -128,15 +128,15 @@ public class TileMap : IDisposable
 
     public TileMap(TileSet sheet,
         OgmoFile file,
-        Graphics.Color background = null,
+        Color? background = null,
         Texture2D backgroundTexture = null,
         bool mergeHitBoxes = true)
     {
         Hitbox.Rectangle[,] _hitboxData;
-        Graphics.Color bg;
+        Color bg;
         if (background != null)
         {
-            bg = background;
+            bg = background.HasValue ? background.Value : Color.Black;
         }
         else { bg = new(0, 0, 0); }
         _sheet = sheet;
@@ -150,8 +150,8 @@ public class TileMap : IDisposable
         _renderTarget = new RenderTarget2D
         (
             GameManager.Instance.GraphicsDevice,
-            xCount * sheet.TileSize.i,
-            yCount * sheet.TileSize.j
+            xCount * sheet.TileSize.X,
+            yCount * sheet.TileSize.Y
         );
 
         GameManager.Instance.GraphicsDevice.SetRenderTarget(_renderTarget);
@@ -163,10 +163,10 @@ public class TileMap : IDisposable
             (
                 backgroundTexture,
                 new Rectangle(0, 0,
-                xCount * sheet.TileSize.i,
-                yCount * sheet.TileSize.j),
+                xCount * sheet.TileSize.X,
+                yCount * sheet.TileSize.Y),
                 null,
-                new Color(bg.RGB.R, bg.RGB.G, bg.RGB.B)
+                bg
             );
         }
 
@@ -193,10 +193,10 @@ public class TileMap : IDisposable
                             sheet.Texture,
                             new Rectangle
                             (
-                                x * sheet.TileSize.i,
-                                y * sheet.TileSize.j,
-                                sheet.TileSize.i,
-                                sheet.TileSize.j
+                                x * sheet.TileSize.X,
+                                y * sheet.TileSize.Y,
+                                sheet.TileSize.X,
+                                sheet.TileSize.Y
                             ),
                             sheet.GetRectangle(layer.data[i]),
                             Microsoft.Xna.Framework.Color.White
@@ -211,8 +211,8 @@ public class TileMap : IDisposable
 
                         if (!(sheet.ReplaceEntity[sx, sy] is null))
                         {
-                            Vector pos = new Vector();
-                            pos = new Vector
+                            Vector2 pos = new Vector2();
+                            pos = new Vector2
                             (
                             -(file.width / 2f) + layer.gridCellWidth / 2f,
                                 file.height / 2f - layer.gridCellHeight / 2f
@@ -221,8 +221,8 @@ public class TileMap : IDisposable
                             obj.Space.Position += Position;
                             obj.Space.GridOrigin = Bounds.Center;
                             obj.Space.Position += pos;
-                            obj.Space.Position.x += x % (file.width / layer.gridCellWidth) * layer.gridCellWidth;
-                            obj.Space.Position.y -= System.Math.DivRem(x * layer.gridCellWidth, file.width).Quotient * sheet.TileSize.j;
+                            obj.Space.Position.X += x % (file.width / layer.gridCellWidth) * layer.gridCellWidth;
+                            obj.Space.Position.Y -= System.Math.DivRem(x * layer.gridCellWidth, file.width).Quotient * sheet.TileSize.Y;
                             obj.Renderer.hide = false;
                             sheet.entities.Add(obj);
                         }
@@ -246,26 +246,26 @@ public class TileMap : IDisposable
                     {
                         Hitbox.Rectangle hit = _hitboxData[x, y].Copy();
                         hit.Active = true;
-                        hit.PositionOffset += new Vector
+                        hit.PositionOffset += new Vector2
                         (
-                            -(_file.width / 2f) + _sheet.TileSize.i / 2f,
-                            _file.height / 2f - _sheet.TileSize.j / 2f
+                            -(_file.width / 2f) + _sheet.TileSize.X / 2f,
+                            _file.height / 2f - _sheet.TileSize.Y / 2f
                         );
-                        hit.PositionOffset.x += x * _sheet.TileSize.i;
-                        hit.PositionOffset.y -= y * _sheet.TileSize.j;
-                        hit.LockSize = new Vector(
-                            _hitboxData[x, y].LockSize.x,
-                            _hitboxData[x, y].LockSize.y);
+                        hit.PositionOffset.X += x * _sheet.TileSize.X;
+                        hit.PositionOffset.Y -= y * _sheet.TileSize.Y;
+                        hit.LockSize = new Vector2(
+                            _hitboxData[x, y].LockSize.X,
+                            _hitboxData[x, y].LockSize.Y);
                     }
                 }
             }
         }
-        Color = Graphics.Color.White;
+        Color = Color.White;
     }
 
-    public Vector[] GetPos(ushort i, ushort j)
+    public Vector2[] GetPos(ushort i, ushort j)
     {
-        System.Collections.Generic.List<Vector> result = new System.Collections.Generic.List<Vector>();
+        System.Collections.Generic.List<Vector2> result = new System.Collections.Generic.List<Vector2>();
         int target = i + j * _sheet.Xlenght;
         foreach (OgmoLayer layer in _file.layers)
         {
@@ -273,10 +273,10 @@ public class TileMap : IDisposable
             {
                 if (layer.data[k] == target)
                 {
-                    result.Add(new Vector
+                    result.Add(new Vector2
                         (
-                           k % xCount * _sheet.TileSize.i - (_file.width - _sheet.TileSize.i) / 2f,
-                           -(k / xCount) * _sheet.TileSize.j + (_file.height + _sheet.TileSize.j) / 2f - _sheet.TileSize.j
+                           k % xCount * _sheet.TileSize.X- (_file.width - _sheet.TileSize.X) / 2f,
+                           -(k / xCount) * _sheet.TileSize.Y + (_file.height + _sheet.TileSize.Y) / 2f - _sheet.TileSize.Y
                         ));
                 }
             }
@@ -309,7 +309,7 @@ public class TileMap : IDisposable
                     && lst[x + width, y] is not null
                     && lst[x + width, y]._tag == hit1._tag
                     && lst[x + width, y].Layer == hit1.Layer
-                    && lst[x + width, y].LockSize.y == hit1.LockSize.y)
+                    && lst[x + width, y].LockSize.Y == hit1.LockSize.Y)
                 {
                     lst[x + width, y] = null;
                     width++;
@@ -326,7 +326,7 @@ public class TileMap : IDisposable
                         if (h1 is null
                            || h1._tag != h2._tag
                            || h1.Layer != h2.Layer
-                           || h1.LockSize.x != h2.LockSize.x)
+                           || h1.LockSize.X != h2.LockSize.X)
                         {
                             return false;
                         }
@@ -345,13 +345,13 @@ public class TileMap : IDisposable
                 Hitbox.Rectangle hit = hit1.Copy();
                 hit.Layer = hit1.Layer;
                 hit.Active = true;
-                hit.PositionOffset += new Vector
+                hit.PositionOffset += new Vector2
                 (
-                    -(_file.width / 2f) + _sheet.TileSize.i / 2f,
-                    _file.height / 2f - _sheet.TileSize.j / 2f
+                    -(_file.width / 2f) + _sheet.TileSize.X/ 2f,
+                    _file.height / 2f - _sheet.TileSize.Y / 2f
                 );
-                hit.PositionOffset.x += (x + (width - 1) / 2f) * _sheet.TileSize.i;
-                hit.PositionOffset.y -= (y + (height - 1) / 2f) * _sheet.TileSize.j;
+                hit.PositionOffset.X += (x + (width - 1) / 2f) * _sheet.TileSize.X;
+                hit.PositionOffset.Y -= (y + (height - 1) / 2f) * _sheet.TileSize.Y;
                 float a = 0f;
                 float b = 0f;
                 if (hit._tag == "red" || hit._tag == "green")
@@ -365,9 +365,9 @@ public class TileMap : IDisposable
                         b = -6f;
                     }
                 }
-                hit.LockSize = new Vector(
-                    hit1.LockSize.x * width + a,
-                    hit1.LockSize.y * height + b);
+                hit.LockSize = new Vector2(
+                    hit1.LockSize.X * width + a,
+                    hit1.LockSize.Y * height + b);
                 lst[x, y] = null;
 
                 i = -1;
@@ -389,9 +389,9 @@ public class TileMap : IDisposable
         }
     }
 
-    public Vector Position;
+    public Vector2 Position;
 
-    public Graphics.Color Color { get; set; }
+    public Color Color { get; set; }
 
     public void Draw()
     {
@@ -400,13 +400,13 @@ public class TileMap : IDisposable
             _renderTarget,
             new Rectangle
             (
-                (int)(Position.x - Camera.Position.x),
-                (int)(Position.y + Camera.Position.y),
+                (int)(Position.X - Camera.Position.X),
+                (int)(Position.Y + Camera.Position.Y),
                 _file.width,
                 256
             ),
             null,
-            new Color(Color.RGB.R, Color.RGB.G, Color.RGB.B),
+            Color,
             0,
             Vector2.Zero,
             SpriteEffects.None,

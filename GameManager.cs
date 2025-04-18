@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 using System;
 using System.IO;
@@ -54,7 +55,7 @@ public static class GameManager
 
     public static void UpdateEnvironments()
     {
-        _nstnc.FullScreen = _nstnc.FullScreen;
+        _nstnc.UpdateEnvironments();
     }
     
     private static Settings _settings;
@@ -212,9 +213,9 @@ public static class Camera
     /// <summary>
     /// Position de la caméra.
     /// </summary>
-    private static Vector _position = Vector.Zero;
+    private static Vector2 _position = Vector2.Zero;
 
-    public static Vector Position
+    public static Vector2 Position
     {
         get => _position;
         set => _position = value;
@@ -239,7 +240,7 @@ public static class Screen
     /// <summary>
     /// Couleur d'arrière plan.
     /// </summary>
-    public static Graphics.Color backGround = new(0.1f, 0.2f, 0.3f);
+    public static Color backGround = new(0.1f, 0.2f, 0.3f);
 
     internal static int rww, rwh;
     public static int WindowWidth => rww;

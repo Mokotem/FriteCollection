@@ -2,282 +2,275 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace FriteCollection.Entity
+namespace FriteCollection.Entity;
+
+public abstract class Entity
 {
-    public abstract class Entity
+    public Space Space = new Space();
+
+    public Renderer Renderer = new Renderer();
+
+    public virtual void Draw() { }
+}
+
+/// <summary>
+/// Object.
+/// </summary>
+public class Object : Entity, ICopy<Object>
+{
+    public Object Copy()
     {
-        public Space Space = new();
-
-        public Renderer Renderer = new Renderer();
-
-        public virtual void Draw() { }
-
-        private protected Color GetEntColor()
+        return new()
         {
-            return
-            (Renderer.Color * ((Renderer.Alpha + 1) / 2f) + (new Graphics.Color(1, 0, 0) * (1 - (Renderer.Alpha / 2f)))).ToMonogameColor() * Renderer.Alpha;
-        }
+            Space = Space.Copy(),
+            Renderer = Renderer.Copy()
+        };
     }
 
-    /// <summary>
-    /// Object.
-    /// </summary>
-    public class Object : Entity, ICopy<Object>
+    public override void Draw()
     {
-        public Object Copy()
+        if (Renderer.hide == false)
         {
-            return new()
+            Vector2 entPosi = Space.GetScreenPosition();
+            Vector2 s = Space.Scale;
+            float flipFactor = 0f;
+
+            SpriteEffects spriteEffect = SpriteEffects.None;
+            if (s.X< 0 && s.Y < 0)
             {
-                Space = Space.Copy(),
-                Renderer = Renderer.Copy()
-            };
-        }
-
-        public override void Draw()
-        {
-            if (Renderer.hide == false)
+                flipFactor = MathF.PI * 1;
+            }
+            else
             {
-                Vector entPosi = Space.GetScreenPosition();
-                Vector s = Space.Scale;
-                float flipFactor = 0f;
-
-                SpriteEffects spriteEffect = SpriteEffects.None;
-                if (s.x < 0 && s.y < 0)
+                if (s.X< 0 && s.Y >= 0)
                 {
-                    flipFactor = MathF.PI * 1;
+                    spriteEffect = SpriteEffects.FlipVertically;
+                    flipFactor = MathF.PI;
                 }
-                else
+                else if (s.Y < 0 && s.X >= 0)
                 {
-                    if (s.x < 0 && s.y >= 0)
-                    {
-                        spriteEffect = SpriteEffects.FlipVertically;
-                        flipFactor = MathF.PI;
-                    }
-                    else if (s.y < 0 && s.x >= 0)
-                    {
-                        spriteEffect = SpriteEffects.FlipHorizontally;
-                        flipFactor = MathF.PI;
-                    }
+                    spriteEffect = SpriteEffects.FlipHorizontally;
+                    flipFactor = MathF.PI;
                 }
+            }
 
-                if (Renderer.shadow)
-                {
-                    GameManager.Instance.SpriteBatch.Draw
-                    (
-                        Renderer.Texture,
-                        new Rectangle
-                        (
-                            (int)entPosi.x + 4,
-                            (int)entPosi.y + 4,
-                            (int)MathF.Abs(s.x),
-                            (int)MathF.Abs(s.y)
-                        ),
-                        null,
-                        Color.Black * Renderer.Alpha,
-                        float.DegreesToRadians(Space.rotation) + flipFactor,
-                        Renderer.GetTextureBounds()[(int)Space.CenterPoint].ToVector2(),
-                        SpriteEffects.None,
-                        0.75f
-                    );
-                }
-
+            if (Renderer.shadow)
+            {
                 GameManager.Instance.SpriteBatch.Draw
                 (
                     Renderer.Texture,
                     new Rectangle
                     (
-                        (int)entPosi.x,
-                        (int)entPosi.y,
-                        (int)MathF.Abs(s.x),
-                        (int)MathF.Abs(s.y)
+                        (int)entPosi.X + 4,
+                        (int)entPosi.Y + 4,
+                        (int)MathF.Abs(s.X),
+                        (int)MathF.Abs(s.Y)
                     ),
                     null,
-                    base.GetEntColor(),
+                    Color.Black * Renderer.Alpha,
                     float.DegreesToRadians(Space.rotation) + flipFactor,
-                    Renderer.GetTextureBounds()[(int)Space.CenterPoint].ToVector2(),
-                    spriteEffect,
-                    Renderer.GetLayer()
+                    Renderer.GetTextureBounds()[(int)Space.CenterPoint],
+                    SpriteEffects.None,
+                    0.75f
                 );
             }
-        }
 
-        public override bool Equals(object obj)
-        {
-            if (obj is Object)
-            {
-                return Space.Equals((obj as Object).Space)
-                    && Renderer.Equals((obj as Object).Renderer);
-            }
-            return false;
-        }
-
-        public override string ToString()
-        {
-            return "Object (" + Space.ToString() + ", " + Renderer.ToString() + ")";
+            GameManager.Instance.SpriteBatch.Draw
+            (
+                Renderer.Texture,
+                new Rectangle
+                (
+                    (int)entPosi.X,
+                    (int)entPosi.Y,
+                    (int)MathF.Abs(s.X),
+                    (int)MathF.Abs(s.Y)
+                ),
+                null,
+                this.Renderer.Color,
+                float.DegreesToRadians(Space.rotation) + flipFactor,
+                Renderer.GetTextureBounds()[(int)Space.CenterPoint],
+                spriteEffect,
+                Renderer.GetLayer()
+            );
         }
     }
 
-    /// <summary>
-    /// Text.
-    /// </summary>
-    public class Text : Entity, ICopy<Text>
+    public override bool Equals(object obj)
     {
-        private int _spacing;
-
-        public Text Copy()
+        if (obj is Object)
         {
-            Text t = new(font)
-            {
-                Space = Space.Copy(),
-                Renderer = Renderer.Copy(),
-                Spacing = _spacing
-            };
-            return t;
+            return Space.Equals((obj as Object).Space)
+                && Renderer.Equals((obj as Object).Renderer);
         }
+        return false;
+    }
 
-        public override void Draw()
+    public override string ToString()
+    {
+        return "Object (" + Space.ToString() + ", " + Renderer.ToString() + ")";
+    }
+}
+
+/// <summary>
+/// Text.
+/// </summary>
+public class Text : Entity, ICopy<Text>
+{
+    private int _spacing;
+
+    public Text Copy()
+    {
+        Text t = new(font)
         {
-            if (Renderer.hide == false && _text != null)
+            Space = Space.Copy(),
+            Renderer = Renderer.Copy(),
+            Spacing = _spacing
+        };
+        return t;
+    }
+
+    public override void Draw()
+    {
+        if (Renderer.hide == false && _text != null)
+        {
+            Vector2 entPosi = Space.GetScreenPosition();
+
+            foreach (Vector2 pos in new Vector2[8]
             {
-                Vector entPosi = Space.GetScreenPosition();
+                new(-1, 1),
+                new(-1, -1),
+                new(1, -1),
+                new(1, 1),
 
-                foreach (Vector pos in new Vector[8]
-                {
-                    new(-1, 1),
-                    new(-1, -1),
-                    new(1, -1),
-                    new(1, 1),
-
-                   new(0, 1),
-                    new(0, -1),
-                    new(1, 0),
-                    new(-1, 0),
-                })
-                {
-                    GameManager.Instance.SpriteBatch.DrawString
-                (
-                    font,
-                    _text,
-                    new Vector2
-                    (
-                        entPosi.x + pos.x, entPosi.y + pos.y
-                    ),
-                    Color.Black,
-                    Space.rotation * (MathF.PI / 180f),
-                    GetTextBounds()[(int)Space.CenterPoint].ToVector2(),
-                    1,
-                    SpriteEffects.None,
-                    0
-                );
-                }
-
+               new(0, 1),
+                new(0, -1),
+                new(1, 0),
+                new(-1, 0),
+            })
+            {
                 GameManager.Instance.SpriteBatch.DrawString
+            (
+                font,
+                _text,
+                new Vector2
                 (
-                    font,
-                    _text,
-                    new Vector2
-                    (
-                        entPosi.x, entPosi.y
-                    ),
-                    GetEntColor(),
-                    Space.rotation * (MathF.PI / 180f),
-                    GetTextBounds()[(int)Space.CenterPoint].ToVector2(),
-                    1,
-                    SpriteEffects.None,
-                    0
-                );
+                    entPosi.X + pos.X, entPosi.Y + pos.Y
+                ),
+                Color.Black,
+                Space.rotation * (MathF.PI / 180f),
+                GetTextBounds()[(int)Space.CenterPoint],
+                1,
+                SpriteEffects.None,
+                0
+            );
             }
-        }
 
-        private Vector[] _bounds;
-        /// <summary>
-        /// Gets the 9 bounds of the text.
-        /// </summary>
-        /// <returns> an array of 9 Vector</returns>
-        public Vector[] GetTextBounds()
-        {
-            return _bounds;
-        }
-
-        private string _text = null;
-
-        /// <summary>
-        /// Text to show.
-        /// </summary>
-        public string Write
-        {
-            get { return _text; }
-            set
-            {
-                _text = value;
-                Space.Scale = new Vector
+            GameManager.Instance.SpriteBatch.DrawString
+            (
+                font,
+                _text,
+                new Vector2
                 (
-                    font.MeasureString(value).X + _spacing * (value.Length - 1),
-                    font.MeasureString(value).Y
+                    entPosi.X, entPosi.Y
+                ),
+                this.Renderer.Color,
+                Space.rotation * (MathF.PI / 180f),
+                GetTextBounds()[(int)Space.CenterPoint],
+                1,
+                SpriteEffects.None,
+                0
+            );
+        }
+    }
+
+    private Vector2[] _bounds;
+    /// <summary>
+    /// Gets the 9 bounds of the text.
+    /// </summary>
+    /// <returns> an array of 9 Vector</returns>
+    public Vector2[] GetTextBounds()
+    {
+        return _bounds;
+    }
+
+    private string _text = null;
+
+    /// <summary>
+    /// Text to show.
+    /// </summary>
+    public string Write
+    {
+        get { return _text; }
+        set
+        {
+            _text = value;
+            Space.Scale = new Vector2
+            (
+                font.MeasureString(value).X + _spacing * (value.Length - 1),
+                font.MeasureString(value).Y
+            );
+            _bounds = BoundFunc.CreateBounds(
+                font.MeasureString(value).X + _spacing * (value.Length - 1),
+                font.MeasureString(value).Y
                 );
-                _bounds = BoundFunc.CreateBounds(
-                    font.MeasureString(value).X + _spacing * (value.Length - 1),
-                    font.MeasureString(value).Y
-                    );
-            }
         }
+    }
 
-        private SpriteFont font;
+    private SpriteFont font;
 
-        /// <summary>
-        /// Gets the font file of the Text.
-        /// </summary>
-        public SpriteFont Font
+    /// <summary>
+    /// Gets the font file of the Text.
+    /// </summary>
+    public SpriteFont Font
+    {
+        get
         {
-            get
-            {
-                return font;
-            }
+            return font;
         }
+    }
 
-        private void Constructor()
-        {
-            _spacing = 0;
-            Space.CenterPoint = Bounds.Center;
-        }
+    private void Constructor()
+    {
+        _spacing = 0;
+        Space.CenterPoint = Bounds.Center;
+    }
 
-        /// <summary>
-        /// Creates a Text Entity.
-        /// </summary>
-        /// <param name="font">font file</param>
-        public Text(SpriteFont font)
-        {
-            this.font = font;
-            Constructor();
-        }
+    /// <summary>
+    /// Creates a Text Entity.
+    /// </summary>
+    /// <param name="font">font file</param>
+    public Text(SpriteFont font)
+    {
+        this.font = font;
+        Constructor();
+    }
 
-        /// <summary>
-        /// Creates a Text Entity.
-        /// </summary>
-        /// <param name="font">font file</param>
-        /// <param name="text">text to show</param>
-        public Text(SpriteFont font, string text)
-        {
-            this.font = font;
-            Constructor();
-            Write = text;
-        }
+    /// <summary>
+    /// Creates a Text Entity.
+    /// </summary>
+    /// <param name="font">font file</param>
+    /// <param name="text">text to show</param>
+    public Text(SpriteFont font, string text)
+    {
+        this.font = font;
+        Constructor();
+        Write = text;
+    }
 
-        /// <summary>
-        /// Spacing between letters.
-        /// </summary>
-        public float Spacing
+    /// <summary>
+    /// Spacing between letters.
+    /// </summary>
+    public float Spacing
+    {
+        get { return font.Spacing; }
+        set
         {
-            get { return font.Spacing; }
-            set
-            {
-                font.Spacing = value;
-            }
+            font.Spacing = value;
         }
+    }
 
-        public override string ToString()
-        {
-            return "Text " + Write + " : (" + Space.ToString() + ", " + Renderer.ToString() + ")";
-        }
+    public override string ToString()
+    {
+        return "Text " + Write + " : (" + Space.ToString() + ", " + Renderer.ToString() + ")";
     }
 }

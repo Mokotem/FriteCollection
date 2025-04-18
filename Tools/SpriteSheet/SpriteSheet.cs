@@ -46,7 +46,7 @@ namespace FriteCollection.Tools.SpriteSheet
         {
             get
             {
-                return textures[p.i, p.j];
+                return textures[p.X, p.Y];
             }
         }
 

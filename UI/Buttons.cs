@@ -32,8 +32,8 @@ public abstract class ButtonCore : Panel
 
     private bool IsInRange(Point pos) =>
         GameManager.Instance.IsActive
-     && pos.i >= this.mRect.X && pos.i < this.mRect.X + this.mRect.Width
-     && pos.j >= this.mRect.Y && pos.j < this.mRect.Y + this.mRect.Height;
+     && pos.X >= this.mRect.X && pos.X < this.mRect.X + this.mRect.Width
+     && pos.Y >= this.mRect.Y && pos.Y < this.mRect.Y + this.mRect.Height;
 
     private protected bool selected = false;
     private bool previousClic = false;
@@ -52,9 +52,9 @@ public abstract class ButtonCore : Panel
 
     private void SetGreyColor()
     {
-        this.Color = new Graphics.Color(0.7f, 0.7f, 0.7f);
+        this.Color = new Color(0.7f, 0.7f, 0.7f);
         if (titleText is not null)
-            titleText.Color = new Graphics.Color(0.7f, 0.7f, 0.7f);
+            titleText.Color = new Color(0.7f, 0.7f, 0.7f);
     }
 
     internal void Update()
@@ -71,9 +71,9 @@ public abstract class ButtonCore : Panel
                 }
                 else
                 {
-                    this.Color = Graphics.Color.White;
+                    this.Color = Color.White;
                     if (titleText is not null)
-                        titleText.Color = Graphics.Color.White;
+                        titleText.Color = Color.White;
 
                     if (previousClic == true && _fonction is not null && selected)
                     {
@@ -125,10 +125,11 @@ public abstract class ButtonCore : Panel
         I._buttons.Add(this);
     }
 
+    private static readonly Point offs = new(-3, -2);
+
     public ButtonCore(string title, TileSet tileset, Rectangle space, UI parent) : base(tileset, space, parent)
     {
-        Point fs = this.mRect.Width < 10 ? new(-3, -1) : new(0, -2);
-        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, fs), this);
+        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, offs), this);
         titleText.Outline = true;
         this.Add(titleText);
         I._buttons.Add(this);
@@ -136,8 +137,7 @@ public abstract class ButtonCore : Panel
 
     public ButtonCore(string title, TileSet tileset, Rectangle space) : base(tileset, space)
     {
-        Point fs = this.mRect.Width < 10 ? new(-3, -1) : new(0, -2);
-        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, fs), this);
+        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, offs), this);
         titleText.Outline = true;
         this.Add(titleText);
         I._buttons.Add(this);
@@ -145,8 +145,7 @@ public abstract class ButtonCore : Panel
 
     public ButtonCore(string title, Texture2D image, Rectangle space, UI parent) : base(image, space, parent)
     {
-        Point fs = this.mRect.Width < 10 ? new(-3, -1) : new(0, -2);
-        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, fs), this);
+        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, offs), this);
         titleText.Outline = true;
         this.Add(titleText);
         I._buttons.Add(this);
@@ -154,8 +153,7 @@ public abstract class ButtonCore : Panel
 
     public ButtonCore(string title, Texture2D image, Rectangle space) : base(image, space)
     {
-        Point fs = this.mRect.Width < 10 ? new(-3, -1) : new(0, -2);
-        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, fs), this);
+        titleText = new Text(title, new Rectangle(in space.environment, Bounds.Center, Extend.Full, Point.Zero, offs), this);
         titleText.Outline = true;
         this.Add(titleText);
         I._buttons.Add(this);

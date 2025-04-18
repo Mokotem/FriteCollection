@@ -30,32 +30,32 @@ public static class Input
             }
         }
 
-        public static Vector GetVectorPosition(in Environment envi)
+        public static Vector2 GetVectorPosition(in Environment envi)
         {
-            Vector offset = new Vector(-envi.rect.X, -envi.rect.Y);
-            offset += new Vector(State.Position.X, State.Position.Y);
-            return new Vector(offset.x / (envi.rect.Width / envi.target.Width), offset.y / (envi.rect.Height / envi.target.Height));
+            Vector2 offset = new Vector2(-envi.Rect.X, -envi.Rect.Y);
+            offset += new Vector2(State.Position.X, State.Position.Y);
+            return new Vector2(offset.X / (envi.Rect.Width / envi.Target.Width), offset.Y / (envi.Rect.Height / envi.Target.Height));
         }
-        public static Vector GetVectorPosition(in Environment envi, Vector mouse)
+        public static Vector2 GetVectorPosition(in Environment envi, Vector2 mouse)
         {
-            Vector offset = new Vector(-envi.rect.X, -envi.rect.Y);
+            Vector2 offset = new Vector2(-envi.Rect.X, -envi.Rect.Y);
             offset += mouse;
-            return new Vector(offset.x / (envi.rect.Width / envi.target.Width), offset.y / (envi.rect.Height / envi.target.Height));
+            return new Vector2(offset.X / (envi.Rect.Width / envi.Target.Width), offset.Y / (envi.Rect.Height / envi.Target.Height));
         }
 
         public static Point GetPointPosition(in Environment envi)
         {
-            Point offset = new Point(-envi.rect.X, -envi.rect.Y);
+            Point offset = new Point(-envi.Rect.X, -envi.Rect.Y);
             offset += new Point(State.Position.X, State.Position.Y);
-            return new Point(offset.i / (envi.rect.Width / envi.target.Width), offset.j / (envi.rect.Height / envi.target.Height));
+            return new Point(offset.X / (envi.Rect.Width / envi.Target.Width), offset.Y / (envi.Rect.Height / envi.Target.Height));
         }
 
 
         public static Point GetPointPosition(in Environment envi, Point mouse)
         {
-            Point offset = new Point(-envi.rect.X, -envi.rect.Y);
+            Point offset = new Point(-envi.Rect.X, -envi.Rect.Y);
             offset += mouse;
-            return new Point(offset.i / (envi.rect.Width / envi.target.Width), offset.j / (envi.rect.Height / envi.target.Height));
+            return new Point(offset.X / (envi.Rect.Width / envi.Target.Width), offset.Y / (envi.Rect.Height / envi.Target.Height));
         }
     }
 
@@ -166,6 +166,7 @@ public static class Time
 public abstract class Executable : IDisposable
 {
     public virtual bool Active { get; }
+    public virtual void BeforeStart() { }
     public virtual void Start() { }
 
     public virtual void BeforeUpdate() { }

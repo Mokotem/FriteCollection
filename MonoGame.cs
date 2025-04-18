@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace FriteModel;
 
@@ -91,8 +92,8 @@ public abstract class MonoGame : Game
 
         CurrentExecutables.Clear();
 
-        Camera.Position = new Vector(0, 0);
-        Screen.backGround = new FriteCollection.Graphics.Color(0.1f, 0.2f, 0.3f);
+        Camera.Position = Vector2.Zero;
+        Screen.backGround = new Color(0.1f, 0.2f, 0.3f);
 
         foreach (Type type in _childTypes)
         {
@@ -111,6 +112,10 @@ public abstract class MonoGame : Game
             script.Load();
         }
 
+        foreach (Executable script in CurrentExecutables.ToArray())
+        {
+            script.BeforeStart();
+        }
         foreach (Executable script in CurrentExecutables.ToArray())
         {
             script.Start();
@@ -152,7 +157,7 @@ public abstract class MonoGame : Game
         }
     }
 
-    internal virtual void UpdateEnvironments()
+    public virtual void UpdateEnvironments()
     {
 
     }
@@ -168,8 +173,8 @@ public abstract class MonoGame : Game
     }
 
     protected MouseState mstate;
-    private FriteCollection.Point mcp;
-    internal FriteCollection.Point MouseClickedPosition => mcp;
+    private Point mcp;
+    internal Point MouseClickedPosition => mcp;
     protected override void Update(GameTime gameTime)
     {
         Time.UpdateGameTime(ref gameTime);
@@ -179,7 +184,7 @@ public abstract class MonoGame : Game
             mstate = Mouse.GetState();
             if (mstate.LeftButton == ButtonState.Pressed)
             {
-                mcp = new FriteCollection.Point(mstate.Position.X, mstate.Position.Y);
+                mcp = new Point(mstate.Position.X, mstate.Position.Y);
             }
         }
 
@@ -220,48 +225,52 @@ public class MonoGameDefault : MonoGame
         game, ui
     };
 
+    public override void UpdateEnvironments()
+    {
+        if (this._fullScreen)
+        {
+            float ratioW = Display.Width / (float)S.GameFixeWidth;
+            float ratioH = Display.Height / (float)S.GameFixeHeight;
+            aspectRatio = MathF.Min(ratioW, ratioH);
+
+            game = new FriteCollection.Environment(new Rectangle
+            (
+                (int)((Display.Width - S.GameFixeWidth * aspectRatio) / 2f),
+                (int)((Display.Height - S.GameFixeHeight * aspectRatio) / 2f),
+                (int)(S.GameFixeWidth * aspectRatio),
+                (int)(S.GameFixeHeight * aspectRatio)
+            ), new RenderTarget2D(GraphicsDevice, S.GameFixeWidth, S.GameFixeHeight));
+        }
+        else
+        {
+            float ratioW = S.WindowWidth / (float)S.GameFixeWidth;
+            float ratioH = S.WindowHeight / (float)S.GameFixeHeight;
+            aspectRatio = MathF.Min(ratioW, ratioH);
+
+            game = new FriteCollection.Environment(new Rectangle
+            (
+                (int)((graphics.PreferredBackBufferWidth - S.GameFixeWidth * aspectRatio) / 2f),
+                (int)((graphics.PreferredBackBufferHeight - S.GameFixeHeight * aspectRatio) / 2f),
+                (int)(S.GameFixeWidth * aspectRatio),
+                (int)(S.GameFixeHeight * aspectRatio)
+            ), new RenderTarget2D(GraphicsDevice, S.GameFixeWidth, S.GameFixeHeight));
+        }
+
+        ui = new FriteCollection.Environment(game.Rect,
+            new RenderTarget2D(GraphicsDevice,
+            game.Rect.Width / S.UICoef,
+            game.Rect.Height / S.UICoef));
+    }
+
     public override bool FullScreen
     {
         get => this._fullScreen;
 
         set
         {
-            if (value)
-            {
-                float ratioW = Display.Width / (float)S.GameFixeWidth;
-                float ratioH = Display.Height / (float)S.GameFixeHeight;
-                aspectRatio = MathF.Min(ratioW, ratioH);
-
-                game = new FriteCollection.Environment(new Rectangle
-                (
-                    (int)((Display.Width - S.GameFixeWidth * aspectRatio) / 2f),
-                    (int)((Display.Height - S.GameFixeHeight * aspectRatio) / 2f),
-                    (int)(S.GameFixeWidth * aspectRatio),
-                    (int)(S.GameFixeHeight * aspectRatio)
-                ), new RenderTarget2D(GraphicsDevice, S.GameFixeWidth, S.GameFixeHeight));
-            }
-            else
-            {
-                float ratioW = S.WindowWidth / (float)S.GameFixeWidth;
-                float ratioH = S.WindowHeight / (float)S.GameFixeHeight;
-                aspectRatio = MathF.Min(ratioW, ratioH);
-
-                game = new FriteCollection.Environment(new Rectangle
-                (
-                    (int)((graphics.PreferredBackBufferWidth - S.GameFixeWidth * aspectRatio) / 2f),
-                    (int)((graphics.PreferredBackBufferHeight - S.GameFixeHeight * aspectRatio) / 2f),
-                    (int)(S.GameFixeWidth * aspectRatio),
-                    (int)(S.GameFixeHeight * aspectRatio)
-                ), new RenderTarget2D(GraphicsDevice, S.GameFixeWidth, S.GameFixeHeight));
-            }
-
-            ui = new FriteCollection.Environment(game.rect,
-                new RenderTarget2D(GraphicsDevice,
-                game.rect.Width / S.UICoef,
-                game.rect.Height / S.UICoef));
-
+            UpdateEnvironments();
             FriteCollection.Entity.Space.SetDefaultEnvironment(ref game);
-            FriteCollection.UI.UI.Rectangle.SetDefaultEnvironment(ref ui);
+            FriteCollection.UI.UI.Rectangle.SetDefaultEnvironment(in ui);
 
             base.FullScreen = value;
         }
@@ -297,8 +306,8 @@ public class MonoGameDefault : MonoGame
 
     protected override void OnDraw(GameTime gameTime)
     {
-        GraphicsDevice.SetRenderTarget(game.target);
-        GraphicsDevice.Clear(Screen.backGround.ToMonogameColor());
+        GraphicsDevice.SetRenderTarget(game.Target);
+        GraphicsDevice.Clear(Screen.backGround);
 
         if (!changingScene)
         {
@@ -330,13 +339,13 @@ public class MonoGameDefault : MonoGame
             }
             SpriteBatch.End();
 
-            GraphicsDevice.SetRenderTarget(ui.target);
+            GraphicsDevice.SetRenderTarget(ui.Target);
 
             GraphicsDevice.Clear(Color.Black);
             SpriteBatch.Begin(samplerState: drawstate);
             SpriteBatch.Draw(
-                game.target,
-                new Rectangle(0, 0, game.rect.Width, game.rect.Height),
+                game.Target,
+                new Rectangle(0, 0, game.Rect.Width, game.Rect.Height),
                 Color.White);
 
             SpriteBatch.End();
@@ -355,7 +364,7 @@ public class MonoGameDefault : MonoGame
         GraphicsDevice.Clear(Color.Black);
 
         SpriteBatch.Begin(samplerState: drawstate);
-        SpriteBatch.Draw(ui.target, ui.rect, Color.White);
+        SpriteBatch.Draw(ui.Target, ui.Rect, Color.White);
         SpriteBatch.End();
 
         changingScene = false;

@@ -1,5 +1,4 @@
-﻿using FriteCollection.Entity;
-using FriteCollection.Scripting;
+﻿using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 
 namespace FriteCollection.Tools.Pen
@@ -14,29 +13,26 @@ namespace FriteCollection.Tools.Pen
         /// </summary>
         public static float thickness = 1;
         public static float layer;
-        public static Graphics.Color Color = Graphics.Color.White;
+        public static Color Color = Color.White;
         public static Bounds GridOrigin;
         public static Environment environment;
 
         /// <summary>
         /// Draws a line from a point to an other
         /// </summary>
-        public static void Line(Vector v1, Vector v2, float? thickness = null, Graphics.Color color = null)
+        public static void Line(Vector2 v1, Vector2 v2, float? thickness = null, Color? color = null)
         {
             float th = thickness is null ? Pen.thickness : thickness.Value;
-            Graphics.Color co = color is null ? Color : color;
-            Vector offset = environment.bounds[(int)GridOrigin];
+            Color co = color.HasValue ? color.Value : Color;
+            Vector2 offset = environment.Bounds[(int)GridOrigin];
 
             GameManager.Instance.SpriteBatch.DrawLine
             (
-                    v1.x + offset.x - Camera.Position.x,
-                    -v1.y + offset.y + Camera.Position.y,
-                    v2.x + offset.x - Camera.Position.x,
-                    -v2.y + offset.y + Camera.Position.y,
-                    new Microsoft.Xna.Framework.Color
-                    (
-                        co.RGB.R, co.RGB.G, co.RGB.B
-                    ),
+                    v1.X + offset.X - Camera.Position.X,
+                    -v1.Y + offset.Y + Camera.Position.Y,
+                    v2.X + offset.X - Camera.Position.X,
+                    -v2.Y + offset.Y + Camera.Position.Y,
+                    co,
                     th,
                     0
             );
@@ -45,22 +41,19 @@ namespace FriteCollection.Tools.Pen
         /// <summary>
         /// Draws a rectangle. (Rectangle center point : TopLeft)
         /// </summary>
-        public static void Rectangle(Vector v, float width, float height, float? thickness = null, Graphics.Color color = null)
+        public static void Rectangle(Vector2 v, float width, float height, float? thickness = null, Color? color = null)
         {
             float th = thickness is null ? Pen.thickness : thickness.Value;
-            Graphics.Color co = color is null ? Color : color;
-            Vector offset = environment.bounds[(int)GridOrigin];
+            Color co = color.HasValue ? color.Value : Color;
+            Vector2 offset = environment.Bounds[(int)GridOrigin];
 
             GameManager.Instance.SpriteBatch.DrawRectangle
             (
                 new RectangleF
                 (
-                    v.x + offset.x, -v.y + offset.y, width, height
+                    v.X + offset.X, -v.Y + offset.Y, width, height
                 ),
-                new Microsoft.Xna.Framework.Color
-                (
-                        co.RGB.R, co.RGB.G, co.RGB.B
-                ),
+                co,
                 th,
                 0
             );
@@ -69,26 +62,23 @@ namespace FriteCollection.Tools.Pen
         /// <summary>
         /// Draws a circle.
         /// </summary>
-        public static void Circle(Vector v, float radius, float? thickness = null, Graphics.Color color = null, float alpha = 1f)
+        public static void Circle(Vector2 v, float radius, float? thickness = null, Color? color = null, float alpha = 1f)
         {
             float th = thickness is null ? Pen.thickness : thickness.Value;
-            Graphics.Color co = color is null ? Color : color;
-            Vector offset = environment.bounds[(int)GridOrigin];
+            Color co = color.HasValue ? color.Value : Color;
+            Vector2 offset = environment.Bounds[(int)GridOrigin];
 
             GameManager.Instance.SpriteBatch.DrawCircle
             (
                 new CircleF
                 (
-                    new Microsoft.Xna.Framework.Vector2(
-                    v.x + offset.x - Camera.Position.x,
-                    -v.y + offset.y + Camera.Position.y),
+                    new Vector2(
+                    v.X + offset.X - Camera.Position.X,
+                    -v.Y + offset.Y + Camera.Position.Y),
                     radius
                 ),
                 (int)radius,
-                new Microsoft.Xna.Framework.Color
-                (
-                        co.RGB.R * alpha, co.RGB.G * alpha, co.RGB.B * alpha, alpha
-                ),
+                co,
                 th,
                 0
             );
@@ -97,20 +87,17 @@ namespace FriteCollection.Tools.Pen
         /// <summary>
         /// Draws a point.
         /// </summary>
-        public static void Point(Vector v, float? thickness = null, Graphics.Color color = null, float alpha = 1)
+        public static void Point(Vector2 v, float? thickness = null, Color? color = null, float alpha = 1)
         {
             float th = thickness is null ? Pen.thickness : thickness.Value;
-            Graphics.Color co = color is null ? Color : color;
-            Vector offset = environment.bounds[(int)GridOrigin];
+            Color co = color.HasValue ? color.Value : Color;
+            Vector2 offset = environment.Bounds[(int)GridOrigin];
 
             GameManager.Instance.SpriteBatch.DrawPoint
             (
-                v.x + offset.x,
-                -v.y + offset.y,
-                new Microsoft.Xna.Framework.Color
-                (
-                        co.RGB.R * alpha, co.RGB.G * alpha, co.RGB.B * alpha, alpha
-                ),
+                v.X + offset.X,
+                -v.Y + offset.Y,
+                co,
                 th,
                 0
             );
