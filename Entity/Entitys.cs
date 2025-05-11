@@ -16,7 +16,7 @@ public abstract class Entity
 /// <summary>
 /// Object.
 /// </summary>
-public class Object : Entity, ICopy<Object>
+public partial class Object : Entity, ICopy<Object>
 {
     public Object Copy()
     {
@@ -27,22 +27,55 @@ public class Object : Entity, ICopy<Object>
         };
     }
 
+    protected void FinalDraw(
+        Vector2 entPosi,
+        Vector2 size,
+        Color color,
+        float rot,
+        Vector2 center,
+        SpriteEffects effect,
+        float layer)
+    {
+        GameManager.Instance.SpriteBatch.Draw
+            (
+                Renderer.Texture,
+                new Rectangle
+                (
+                    (int)entPosi.X,
+                    (int)entPosi.Y,
+                    (int)(size.X * Camera.zoom),
+                    (int)(size.Y * Camera.zoom)
+                ),
+                null,
+                color * Renderer.Alpha,
+                rot,
+                center,
+                effect,
+                layer
+            );
+    }
+
+    protected virtual void BetweenDraw(Vector2 entPosi, Vector2 size, float rot, Vector2 center, SpriteEffects effect)
+    {
+
+    }
+
     public override void Draw()
     {
         if (Renderer.hide == false)
         {
             Vector2 entPosi = Space.GetScreenPosition();
-            Vector2 s = Space.Scale;
+            Vector2 s = new Vector2(Space.Scale.X, Space.Scale.Y);
             float flipFactor = 0f;
 
             SpriteEffects spriteEffect = SpriteEffects.None;
-            if (s.X< 0 && s.Y < 0)
+            if (s.X < 0 && s.Y < 0)
             {
                 flipFactor = MathF.PI * 1;
             }
             else
             {
-                if (s.X< 0 && s.Y >= 0)
+                if (s.X < 0 && s.Y >= 0)
                 {
                     spriteEffect = SpriteEffects.FlipVertically;
                     flipFactor = MathF.PI;
@@ -54,44 +87,17 @@ public class Object : Entity, ICopy<Object>
                 }
             }
 
-            if (Renderer.shadow)
-            {
-                GameManager.Instance.SpriteBatch.Draw
-                (
-                    Renderer.Texture,
-                    new Rectangle
-                    (
-                        (int)entPosi.X + 4,
-                        (int)entPosi.Y + 4,
-                        (int)MathF.Abs(s.X),
-                        (int)MathF.Abs(s.Y)
-                    ),
-                    null,
-                    Color.Black * Renderer.Alpha,
-                    float.DegreesToRadians(Space.rotation) + flipFactor,
-                    Renderer.GetTextureBounds()[(int)Space.CenterPoint],
-                    SpriteEffects.None,
-                    0.75f
-                );
-            }
-
-            GameManager.Instance.SpriteBatch.Draw
-            (
-                Renderer.Texture,
-                new Rectangle
-                (
-                    (int)entPosi.X,
-                    (int)entPosi.Y,
-                    (int)MathF.Abs(s.X),
-                    (int)MathF.Abs(s.Y)
-                ),
-                null,
-                this.Renderer.Color,
-                float.DegreesToRadians(Space.rotation) + flipFactor,
-                Renderer.GetTextureBounds()[(int)Space.CenterPoint],
+            Vector2 center = Renderer.GetTextureBounds()[(int)Space.CenterPoint];
+            float rot = Space.rotation + flipFactor;
+            this.BetweenDraw(entPosi, s, rot, center, spriteEffect);
+            this.FinalDraw(
+                entPosi,
+                s,
+                Renderer.Color,
+                Space.rotation + flipFactor,
+                center,
                 spriteEffect,
-                Renderer.GetLayer()
-            );
+                this.Renderer.GetLayer());
         }
     }
 
@@ -157,7 +163,7 @@ public class Text : Entity, ICopy<Text>
                     entPosi.X + pos.X, entPosi.Y + pos.Y
                 ),
                 Color.Black,
-                Space.rotation * (MathF.PI / 180f),
+                Space.rotation,
                 GetTextBounds()[(int)Space.CenterPoint],
                 1,
                 SpriteEffects.None,

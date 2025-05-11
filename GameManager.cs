@@ -1,8 +1,9 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
-using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Text.Json;
+using Microsoft.Xna.Framework.Content;
 
 namespace FriteCollection;
 
@@ -33,6 +34,13 @@ public class Settings
 public static class GameManager
 {
     private static FriteModel.MonoGame _nstnc;
+
+    private static ContentManager content;
+    public static void SetContentRef(in ContentManager _content)
+    {
+        content = _content;
+    }
+
     public static void SetGameInstance(FriteModel.MonoGame _instance)
     {
         _nstnc = _instance;
@@ -110,6 +118,7 @@ public static class GameManager
         set
         {
             _currentScene = value;
+            content.Unload();
             Instance.UpdateScriptToScene();
         }
     }
@@ -166,13 +175,13 @@ public static class SaveManager
     /// </summary>
     public static long SpaceTaking => _info is null ? 0 : _info.Length;
 
-    public static void Save(object _struct)
+    public static void Save<T>(T _struct)
     {
         if (!Directory.Exists(folder))
         {
             Directory.CreateDirectory(folder);
         }
-        string save = JsonConvert.SerializeObject(_struct);
+        string save = JsonSerializer.Serialize<T>(_struct);
         using (StreamWriter sw = new StreamWriter(path))
         {
             sw.Write(save);
@@ -200,7 +209,7 @@ public static class SaveManager
         using (StreamReader sr = new StreamReader(path))
             file = sr.ReadToEnd();
         _info = new FileInfo(path);
-        T data = JsonConvert.DeserializeObject<T>(file);
+        T data = JsonSerializer.Deserialize<T>(file);
         return data;
     }
 }

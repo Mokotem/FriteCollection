@@ -83,6 +83,8 @@ public class Space : ICopy<Space>
         }
     }
 
+    public Vector2 Direction => new Vector2(float.Sin(rotation), float.Cos(rotation));
+
     private Bounds _eCenterPoint;
 
     /// <summary>
@@ -177,7 +179,7 @@ public class Renderer : ICopy<Renderer>
     private byte _a = 255;
 
     private float layer;
-    internal float GetLayer() => layer;
+    public float GetLayer() => layer;
 
     public short Layer
     {
@@ -197,29 +199,29 @@ public class Renderer : ICopy<Renderer>
     public static Texture2D CreateCircleTexture(int width)
     {
         Texture2D tex = new Texture2D(GameManager.Instance.GraphicsDevice, width, width);
-        Microsoft.Xna.Framework.Color[] data = new Microsoft.Xna.Framework.Color[width * width];
+        Color[] data = new Color[width * width];
         for (int i = 0; i < width; i += 1)
         {
             for (int j = 0; j < width; j += 1)
             {
                 if (float.Sqrt(float.Pow(i - (width / 2), 2) + float.Pow(j - (width / 2), 2)) <= width / 2)
                 {
-                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.White;
+                    data[i + (j * width)] = Color.White;
                 }
                 else
                 {
-                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.Transparent;
+                    data[i + (j * width)] = Color.Transparent;
                 }
             }
         }
-        tex.SetData<Microsoft.Xna.Framework.Color>(data);
+        tex.SetData<Color>(data);
         return tex;
     }
 
     public static Texture2D CreateCircleTexture(int width, int holeSize)
     {
         Texture2D tex = new Texture2D(GameManager.Instance.GraphicsDevice, width, width);
-        Microsoft.Xna.Framework.Color[] data = new Microsoft.Xna.Framework.Color[width * width];
+        Color[] data = new Color[width * width];
         for (int i = 0; i < width; i += 1)
         {
             float a = float.Pow(i - (width / 2), 2);
@@ -228,37 +230,37 @@ public class Renderer : ICopy<Renderer>
                 float d = float.Sqrt(a + float.Pow(j - (width / 2), 2));
                 if (d <= width / 2 && d >= holeSize / 2)
                 {
-                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.White;
+                    data[i + (j * width)] = Color.White;
                 }
                 else
                 {
-                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.Transparent;
+                    data[i + (j * width)] = Color.Transparent;
                 }
             }
         }
-        tex.SetData<Microsoft.Xna.Framework.Color>(data);
+        tex.SetData<Color>(data);
         return tex;
     }
 
     public static Texture2D CreateFrameTexture(int width, int height, ushort borderSize)
     {
         Texture2D tex = new Texture2D(GameManager.Instance.GraphicsDevice, width, width);
-        Microsoft.Xna.Framework.Color[] data = new Microsoft.Xna.Framework.Color[width * width];
+        Color[] data = new Microsoft.Xna.Framework.Color[width * width];
         for (int i = 0; i < width; i += 1)
         {
             for (int j = 0; j < height; j += 1)
             {
                 if (i < borderSize || j < borderSize || width - i < borderSize + 1 || height - j < borderSize + 1)
                 {
-                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.White;
+                    data[i + (j * width)] = Color.White;
                 }
                 else
                 {
-                    data[i + (j * width)] = Microsoft.Xna.Framework.Color.Transparent;
+                    data[i + (j * width)] = Color.Transparent;
                 }
             }
         }
-        tex.SetData<Microsoft.Xna.Framework.Color>(data);
+        tex.SetData<Color>(data);
         return tex;
     }
 
@@ -282,11 +284,8 @@ public class Renderer : ICopy<Renderer>
     {
         _bounds = BoundFunc.CreateBounds(2, 2);
         _texture = _defaultTexture;
-        shadow = true;
         layer = 0.5f;
     }
-
-    public bool shadow;
 
     public static RenderTarget2D CreateRenderTarget(int width, int height)
     {

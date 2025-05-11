@@ -1,8 +1,10 @@
 ﻿using FriteCollection.Entity.Hitboxs;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Text.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace FriteCollection.Tools.TileMap;
 
@@ -121,8 +123,8 @@ public class TileSet : IDisposable
 
 public class TileMap : IDisposable
 {
-    readonly int xCount;
-    readonly int yCount;
+    private int xCount => _file.layers[0].gridCellsX;
+    private int yCount => _file.layers[0].gridCellsY;
 
     public delegate void DoAt(Point pos);
 
@@ -143,9 +145,6 @@ public class TileMap : IDisposable
         _file = file;
 
         SpriteBatch batch = GameManager.Instance.SpriteBatch;
-
-        xCount = file.width / file.layers[0].gridCellWidth;
-        yCount = file.height / file.layers[0].gridCellHeight;
 
         _renderTarget = new RenderTarget2D
         (
@@ -199,7 +198,7 @@ public class TileMap : IDisposable
                                 sheet.TileSize.Y
                             ),
                             sheet.GetRectangle(layer.data[i]),
-                            Microsoft.Xna.Framework.Color.White
+                            Color.White
                         );
                     }
                     else
@@ -232,40 +231,115 @@ public class TileMap : IDisposable
         }
         batch.End();
 
-        if (mergeHitBoxes)
+        MakeHitboxes(mergeHitBoxes, ref _hitboxData);
+
+        Color = Color.White;
+    }
+
+    private void MakeHitboxes(bool merge, ref Hitbox.Rectangle[,] _hitboxData)
+    {
+        if (merge)
         {
             MergeHitBoxes(ref _hitboxData);
         }
         else
         {
-            for (int x = 0; x < xCount; x++)
+            PlaceHitboxes(ref _hitboxData, _sheet.TileSize);
+        }
+    }
+
+    private void MakeHitboxes(bool merge, ref Hitbox.Rectangle[,] _hitboxData, Point size)
+    {
+        if (merge)
+        {
+            MergeHitBoxes(ref _hitboxData);
+        }
+        else
+        {
+            PlaceHitboxes(ref _hitboxData, size);
+        }
+    }
+
+    private void PlaceHitboxes(ref Hitbox.Rectangle[,] _hitboxData, Point tileSize)
+    {
+        for (int x = 0; x < xCount; ++x)
+        {
+            for (int y = 0; y < yCount; ++y)
             {
-                for (int y = 0; y < yCount; y++)
+                if (_hitboxData[x, y] is not null)
                 {
-                    if (_hitboxData[x, y] is not null)
+                    Hitbox.Rectangle hit = _hitboxData[x, y].Copy();
+                    hit.Active = true;
+                    hit.PositionOffset += new Vector2
+                    (
+                        -(_file.width / 2f) + tileSize.X / 2f,
+                        _file.height / 2f - tileSize.Y / 2f
+                    );
+                    hit.PositionOffset.X += x * tileSize.X;
+                    hit.PositionOffset.Y -= y * tileSize.Y;
+                    hit.LockSize(new Vector2(
+                        _hitboxData[x, y].Size.X,
+                        _hitboxData[x, y].Size.Y));
+                }
+            }
+        }
+    }
+
+    public TileMap(
+        OgmoFile file,
+        Hitbox.Rectangle[] hitboxReplaces,
+        Point tileSize,
+        Color? background = null,
+        Texture2D backgroundTexture = null,
+        bool mergeHitBoxes = true)
+    {
+        _file = file;
+
+        for (int i = 0; i < file.layers.Length; ++i)
+        {
+            _file.layers[i].gridCellWidth = tileSize.X;
+            _file.layers[i].gridCellHeight = tileSize.Y;
+        }
+
+        _file.width = xCount * tileSize.X;
+        _file.height = yCount * tileSize.Y;
+
+        Hitbox.Rectangle[,] _hitboxData;
+        Color bg;
+
+        if (background != null)
+        {
+            bg = background.HasValue ? background.Value : Color.Black;
+        }
+        else { bg = new(0, 0, 0); }
+
+        _hitboxData = new Hitbox.Rectangle[xCount, yCount];
+
+        foreach (OgmoLayer layer in file.layers)
+        {
+            for (int i = 0; i < layer.data.Length; ++i)
+            {
+                if (layer.data[i] >= 0)
+                {
+                    int x = i % xCount;
+                    int y = i / xCount;
+
+                    if (hitboxReplaces[layer.data[i]] is not null)
                     {
-                        Hitbox.Rectangle hit = _hitboxData[x, y].Copy();
-                        hit.Active = true;
-                        hit.PositionOffset += new Vector2
-                        (
-                            -(_file.width / 2f) + _sheet.TileSize.X / 2f,
-                            _file.height / 2f - _sheet.TileSize.Y / 2f
-                        );
-                        hit.PositionOffset.X += x * _sheet.TileSize.X;
-                        hit.PositionOffset.Y -= y * _sheet.TileSize.Y;
-                        hit.LockSize = new Vector2(
-                            _hitboxData[x, y].LockSize.X,
-                            _hitboxData[x, y].LockSize.Y);
+                        _hitboxData[x, y] = hitboxReplaces[layer.data[i]];
                     }
                 }
             }
         }
+
+        MakeHitboxes(mergeHitBoxes, ref _hitboxData, tileSize);
+
         Color = Color.White;
     }
 
     public Vector2[] GetPos(ushort i, ushort j)
     {
-        System.Collections.Generic.List<Vector2> result = new System.Collections.Generic.List<Vector2>();
+        List<Vector2> result = new List<Vector2>();
         int target = i + j * _sheet.Xlenght;
         foreach (OgmoLayer layer in _file.layers)
         {
@@ -295,8 +369,8 @@ public class TileMap : IDisposable
         while (i + 1 < xCount * yCount)
         {
             i++;
-            long x = i % xCount;
-            long y = i / xCount;
+            int x = i % xCount;
+            int y = i / xCount;
 
             Hitbox.Rectangle hit1 = lst[x, y];
 
@@ -309,7 +383,7 @@ public class TileMap : IDisposable
                     && lst[x + width, y] is not null
                     && lst[x + width, y]._tag == hit1._tag
                     && lst[x + width, y].Layer == hit1.Layer
-                    && lst[x + width, y].LockSize.Y == hit1.LockSize.Y)
+                    && lst[x + width, y].Size.Y == hit1.Size.Y)
                 {
                     lst[x + width, y] = null;
                     width++;
@@ -326,7 +400,7 @@ public class TileMap : IDisposable
                         if (h1 is null
                            || h1._tag != h2._tag
                            || h1.Layer != h2.Layer
-                           || h1.LockSize.X != h2.LockSize.X)
+                           || h1.Size.X != h2.Size.X)
                         {
                             return false;
                         }
@@ -347,11 +421,11 @@ public class TileMap : IDisposable
                 hit.Active = true;
                 hit.PositionOffset += new Vector2
                 (
-                    -(_file.width / 2f) + _sheet.TileSize.X/ 2f,
-                    _file.height / 2f - _sheet.TileSize.Y / 2f
+                    -(_file.width / 2f) + (_file.layers[0].gridCellWidth / 2f),
+                    (_file.height / 2f) - (_file.layers[0].gridCellHeight / 2f)
                 );
-                hit.PositionOffset.X += (x + (width - 1) / 2f) * _sheet.TileSize.X;
-                hit.PositionOffset.Y -= (y + (height - 1) / 2f) * _sheet.TileSize.Y;
+                hit.PositionOffset.X += (x + (width - 1) / 2f) * _file.layers[0].gridCellWidth;
+                hit.PositionOffset.Y -= (y + (height - 1) / 2f) * _file.layers[0].gridCellHeight;
                 float a = 0f;
                 float b = 0f;
                 if (hit._tag == "red" || hit._tag == "green")
@@ -365,9 +439,9 @@ public class TileMap : IDisposable
                         b = -6f;
                     }
                 }
-                hit.LockSize = new Vector2(
-                    hit1.LockSize.X * width + a,
-                    hit1.LockSize.Y * height + b);
+                hit.LockSize(new Vector2(
+                    hit1.Size.X * width + a,
+                    hit1.Size.Y * height + b));
                 lst[x, y] = null;
 
                 i = -1;
@@ -427,25 +501,34 @@ public class TileMap : IDisposable
 
 public struct OgmoFile
 {
-    public string ogmoVersion;
-    public int width;
-    public int height;
-    public int offsetX;
-    public int offsetY;
-    public OgmoLayer[] layers;
+    public static OgmoFile Open(string path)
+    {
+        string file;
+        using (StreamReader sr = new StreamReader(System.Environment.CurrentDirectory + "/" + path))
+            file = sr.ReadToEnd();
+        return JsonSerializer.Deserialize<OgmoFile>(file);
+    }
+
+    public string ogmoVersion { get; init; }
+    public int width { get; set; }
+    public int height { get; set; }
+    public int offsetX { get; init; }
+    public int offsetY { get; init; }
+    public OgmoLayer[] layers { get; init; }
 }
 
 public struct OgmoLayer
 {
-    public string name;
-    public int _eid;
-    public int offsetX;
-    public int offsetY;
-    public int gridCellWidth;
-    public int gridCellHeight;
-    public int gridCellsX;
-    public int gridCellsY;
-    public string tileset;
-    public int[] data;
-    public int arrayMode;
+    public string name { get; init; }
+    public string _eid { get; init; }
+    public int offsetX { get; init; }
+    public int offsetY { get; init; }
+    public int gridCellWidth { get; set; }
+    public int gridCellHeight { get; set; }
+    public int gridCellsX { get; init; }
+    public int gridCellsY { get; init; }
+    public string tileset { get; init; }
+    public int[] data { get; init; }
+    public int exportMode { get; init; }
+    public int arrayMode { get; init; }
 }

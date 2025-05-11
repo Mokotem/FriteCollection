@@ -9,6 +9,7 @@ namespace FriteCollection.Entity.Hitboxs;
 public abstract class Hitbox
 {
     private const int _numberOfLayers = 3;
+    private const float Pis2 = float.Pi / 2f;
 
     private readonly static List<Hitbox>[] _hitBoxesList = new List<Hitbox>[_numberOfLayers]
     {
@@ -16,6 +17,8 @@ public abstract class Hitbox
         new(),
         new()
     };
+
+    public virtual Vector2 Size => Vector2.One;
 
     public static void ClearHitboxes()
     {
@@ -38,13 +41,13 @@ public abstract class Hitbox
 
 
     private byte _layer = 0;
-    public string _tag = "";
+    internal string _tag = "";
     public bool Active = true;
 
     private protected readonly Space _refSpace;
     public Vector2 PositionOffset;
 
-    private Hitbox(Space _space, string tag = "", byte layer = 0)
+    private Hitbox(in Space _space, string tag = "", byte layer = 0)
     {
         _refSpace = _space;
         this._tag = tag;
@@ -78,20 +81,17 @@ public abstract class Hitbox
     private protected Vector2 _point;
     private bool positionLocked = false;
 
-    public virtual Vector2 LockPosition
+    public virtual void LockPosition(Vector2 value)
     {
-        get => Vector2.Zero;
-        set
-        {
-            positionLocked = true;
-            Vector2 q = BoundFunc.BoundToVector(
-                    _refSpace.GridOrigin,
-                    Screen.widht,
-                    Screen.height
-                    );
-            _point = new Vector2(value.X + q.X, -value.Y + q.Y);
-        }
+        positionLocked = true;
+        Vector2 q = BoundFunc.BoundToVector(
+                _refSpace.GridOrigin,
+                Screen.widht,
+                Screen.height
+                );
+        _point = new Vector2(value.X + q.X, -value.Y + q.Y);
     }
+
     public void UnlockPosition()
     {
         positionLocked = false;
@@ -134,8 +134,7 @@ public abstract class Hitbox
         {
             this.thickness = thickness;
             this.UpdatePos();
-            float d = _space.rotation * (float.Pi / 180f);
-            norme = new Vector2(float.Cos(d + (float.Pi / 2f)), float.Sin(d + (float.Pi / 2f)));
+            norme = new Vector2(float.Cos(_space.rotation), float.Sin(_space.rotation));
         }
 
         public Line Copy()
@@ -149,15 +148,10 @@ public abstract class Hitbox
         }
 
         private bool directionLocked;
-        public float LockDirection
+        public void LockDirection(float value)
         {
-            set
-            {
-                directionLocked = true;
-                _dir = value * (float.Pi / 180f);
-                norme = new Vector2(float.Cos(_dir + (float.Pi / 2f)),
-                    float.Sin(_dir + (float.Pi / 2f)));
-            }
+            directionLocked = true;
+            norme = new Vector2(float.Cos(value), float.Sin(value));
         }
 
         public Vector2 Norme => norme;
@@ -179,9 +173,9 @@ public abstract class Hitbox
 
             if (!directionLocked)
             {
-                _dir = _refSpace.rotation * (float.Pi / 180f);
-                norme = new Vector2(float.Cos(_dir + (float.Pi / 2f)),
-                    float.Sin(_dir + (float.Pi / 2f)));
+                _dir = _refSpace.rotation;
+                norme = new Vector2(float.Cos(_dir),
+                    float.Sin(_dir));
             }
         }
 
@@ -221,21 +215,21 @@ public abstract class Hitbox
             return false;
         }
 
-        private float f(float x) => (float.Tan(_dir) * (x - _point.X)) + _point.Y;
-        private float g(float y) => (float.Tan((float.Pi / 2f) - _dir) * (y - _point.Y)) + _point.X;
+        private float f(float x) => (float.Tan(_dir + Pis2) * (x - _point.X)) + _point.Y;
+        private float g(float y) => (float.Tan(-_dir ) * (y - _point.Y)) + _point.X;
 
         public void Draw()
         {
             if (this.Active)
             {
                 this.UpdatePos();
-                if (float.Cos(_dir) == 0)
+                if (float.Abs(float.Sin(_dir)) < 0.001f)
                 {
                     GameManager.Instance.SpriteBatch.DrawLine
                     (
                         _point.X, 0,
                         _point.X, Screen.height,
-                        Hitbox._color[_layer] * (thickness == 0 ? 1 : 0.2f),
+                        _color[_layer] * (thickness == 0 ? 1 : 0.2f),
                         thickness: thickness + 1
                     );
                 }
@@ -258,7 +252,7 @@ public abstract class Hitbox
                     (
                         p1.X, p1.Y,
                         p2.X, p2.Y,
-                        Hitbox._color[_layer] * (thickness == 0 ? 1 : 0.2f),
+                        _color[_layer] * (thickness == 0 ? 1 : 0.2f),
                         thickness: thickness + 1
                     );
                 }
@@ -338,7 +332,7 @@ public abstract class Hitbox
         public Collision[] AdvancedCheck(
                 string tag = null)
         {
-            System.Collections.Generic.List<Collision> result = new System.Collections.Generic.List<Collision>();
+            List<Collision> result = new List<Collision>();
             this.UpdatePos();
             foreach (Hitbox col in _hitBoxesList[_layer])
             {
@@ -389,13 +383,10 @@ public abstract class Hitbox
         }
 
         private bool radiusLocked;
-        public float LockRadius
+        public void LockRadius(float value)
         {
-            set
-            {
-                radiusLocked = true;
-                _radius = value;
-            }
+            radiusLocked = true;
+            _radius = value;
         }
 
         public void Draw()
@@ -451,7 +442,7 @@ public abstract class Hitbox
                 }
             }
         }
-        public Rectangle(Space _space, string tag = "", byte layer = 0) : base(_space, tag, layer)
+        public Rectangle(in Space _space, string tag = "", byte layer = 0) : base(in _space, tag, layer)
         {
             this.UpdatePos();
         }
@@ -460,55 +451,48 @@ public abstract class Hitbox
 
         private bool sizeLocked = false;
         private Vector2 lockSize;
-        public Vector2 LockSize
+        public void LockSize(Vector2 value)
         {
-            get
-            {
-                return lockSize;
-            }
-            set
-            {
-                sizeLocked = true;
-                lockSize = value;
-            }
+            sizeLocked = true;
+            lockSize = value;
         }
+
+        public override Vector2 Size => lockSize;
+
         public void UnlockSize()
         {
             sizeLocked = false;
         }
 
-        public override Vector2 LockPosition
+        public override void LockPosition(Vector2 value)
         {
-            set
+            positionLocked = true;
+            Vector2 p;
+            Vector2 q = BoundFunc.BoundToVector(
+                    _refSpace.GridOrigin,
+                    Screen.widht,
+                    Screen.height
+                    );
+            if (sizeLocked)
             {
-                positionLocked = true;
-                Vector2 p;
-                Vector2 q = BoundFunc.BoundToVector(
-                        _refSpace.GridOrigin,
-                        Screen.widht,
-                        Screen.height
-                        );
-                if (sizeLocked)
-                {
-                    p = BoundFunc.BoundToVector(
-                        _refSpace.CenterPoint,
-                        lockSize.X,
-                        lockSize.Y
-                        );
-                }
-                else
-                {
-                    p = BoundFunc.BoundToVector(
-                        _refSpace.CenterPoint,
-                        _refSpace.Scale.X,
-                        _refSpace.Scale.Y
-                        );
-                }
-                _point = new Vector2(
-                    value.X + q.X - p.X + PositionOffset.X,
-                    -value.Y + q.Y - p.Y - PositionOffset.Y
+                p = BoundFunc.BoundToVector(
+                    _refSpace.CenterPoint,
+                    lockSize.X,
+                    lockSize.Y
                     );
             }
+            else
+            {
+                p = BoundFunc.BoundToVector(
+                    _refSpace.CenterPoint,
+                    _refSpace.Scale.X,
+                    _refSpace.Scale.Y
+                    );
+            }
+            _point = new Vector2(
+                value.X + q.X - p.X + PositionOffset.X,
+                -value.Y + q.Y - p.Y - PositionOffset.Y
+                );
         }
 
         private protected override void UpdatePos()
@@ -851,7 +835,7 @@ public abstract class Hitbox
             string tag = null)
         {
             this.UpdatePos();
-            System.Collections.Generic.List<Collision> cols = new System.Collections.Generic.List<Collision>();
+            List<Collision> cols = new List<Collision>();
             side = Sides.None;
 
             bool[] global = new bool[4] { false, false, false, false };

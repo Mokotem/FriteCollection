@@ -33,21 +33,24 @@ public static class Input
         public static Vector2 GetVectorPosition(in Environment envi)
         {
             Vector2 offset = new Vector2(-envi.Rect.X, -envi.Rect.Y);
-            offset += new Vector2(State.Position.X, State.Position.Y);
-            return new Vector2(offset.X / (envi.Rect.Width / envi.Target.Width), offset.Y / (envi.Rect.Height / envi.Target.Height));
+            offset += new Vector2(State.Position.X, -State.Position.Y);
+            return new Vector2(offset.X / (envi.Rect.Width / envi.Target.Width),
+                offset.Y / (envi.Rect.Height / envi.Target.Height)) + envi.Bounds[(int)_origin];
         }
         public static Vector2 GetVectorPosition(in Environment envi, Vector2 mouse)
         {
             Vector2 offset = new Vector2(-envi.Rect.X, -envi.Rect.Y);
             offset += mouse;
-            return new Vector2(offset.X / (envi.Rect.Width / envi.Target.Width), offset.Y / (envi.Rect.Height / envi.Target.Height));
+            return new Vector2(offset.X / (envi.Rect.Width / envi.Target.Width),
+                offset.Y / (envi.Rect.Height / envi.Target.Height));
         }
 
         public static Point GetPointPosition(in Environment envi)
         {
             Point offset = new Point(-envi.Rect.X, -envi.Rect.Y);
             offset += new Point(State.Position.X, State.Position.Y);
-            return new Point(offset.X / (envi.Rect.Width / envi.Target.Width), offset.Y / (envi.Rect.Height / envi.Target.Height));
+            return new Point(offset.X / (envi.Rect.Width / envi.Target.Width),
+                offset.Y / (envi.Rect.Height / envi.Target.Height));
         }
 
 
@@ -55,7 +58,8 @@ public static class Input
         {
             Point offset = new Point(-envi.Rect.X, -envi.Rect.Y);
             offset += mouse;
-            return new Point(offset.X / (envi.Rect.Width / envi.Target.Width), offset.Y / (envi.Rect.Height / envi.Target.Height));
+            return new Point(offset.X / (envi.Rect.Width / envi.Target.Width),
+                offset.Y / (envi.Rect.Height / envi.Target.Height));
         }
     }
 
@@ -104,6 +108,7 @@ public static class Time
 {
     private static float _sp = 1f;
     private static float _frameTime = 1f / GameManager.Fps;
+    private static double reset = 0d;
 
     public static float SpaceTime
     {
@@ -141,11 +146,16 @@ public static class Time
         _frameTime = 1f / fps;
     }
 
-    internal static void UpdateGameTime(ref GameTime gt)
+    internal static void UpdateGameTime(in GameTime gt)
     {
-        timer = gt.TotalGameTime.TotalMicroseconds / 1000000d;
+        timer = (gt.TotalGameTime.TotalMicroseconds / 1000000d) - reset;
         dt = gt.ElapsedGameTime.TotalMicroseconds / 1000000d;
         dtf = (float)gt.ElapsedGameTime.TotalMilliseconds / 1000f;
+    }
+
+    internal static void Reset(in GameTime gt)
+    {
+        reset = gt.TotalGameTime.TotalMicroseconds / 1000000d;
     }
 
     private static double timer, dt;
@@ -159,8 +169,8 @@ public static class Time
     /// <summary>
     /// Temps écoulé depuis la dernière frame.
     /// </summary>
-    public static double Delta => dt;
-    public static float DeltaF => dtf;
+    public static double Delta => dt * _sp;
+    public static float DeltaF => dtf * _sp;
 }
 
 public abstract class Executable : IDisposable
@@ -233,14 +243,14 @@ public abstract class Script : Executable
         GameManager.Instance.Window.ClientSizeChanged += (object sender, EventArgs args) => { OnWindowResize(); };
     }
 
-    public static Script GetScript<T>() where T: Script
+    public static T GetScript<T>() where T: Script
     {
         foreach(Script s in GameManager.Instance.CurrentExecutables)
         {
             if (s.GetType().Name == typeof(T).Name)
                 return s as T;
         }
-        throw new System.Exception("'" + typeof(T).Name + "' scripte n'existe pas dans cette scène.");
+        throw new Exception("'" + typeof(T).Name + "' scripte n'existe pas dans cette scène.");
     }
 
     private readonly bool _active;

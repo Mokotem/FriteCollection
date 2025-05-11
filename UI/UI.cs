@@ -147,6 +147,19 @@ public abstract class UI : IDisposable
     public delegate void Procedure();
     private protected UI papa;
 
+    public UI()
+    {
+        GameManager.Instance.OnScreenUpdate += this.OnScreenUpdate;
+    }
+
+    private void OnScreenUpdate(bool full)
+    {
+        if (papa is null)
+        {
+            this.ApplySpace();
+        }
+    }
+
     public Point Scale
     {
         get => space.Scale;
@@ -275,7 +288,7 @@ public abstract class UI : IDisposable
         }
     }
 
-    private protected void ApplySpace(Microsoft.Xna.Framework.Rectangle parent)
+    private protected virtual void ApplySpace(Microsoft.Xna.Framework.Rectangle parent)
     {
         ApplyScale(parent);
         ApplyPosition(parent);
@@ -389,6 +402,13 @@ public class Text : UI, IEdit<string>
         }
     }
 
+    private protected override void ApplySpace(Microsoft.Xna.Framework.Rectangle parent)
+    {
+        ApplyScale(parent);
+        ApplyText(this.text);
+        ApplyPosition(parent);
+    }
+
     private void ApplyText(string input)
     {
         text = "";
@@ -402,31 +422,39 @@ public class Text : UI, IEdit<string>
         }
         else
         {
-            while (i < txt.Length)
+            if (HasFontAspect)
             {
-                string line = "";
-                if (HasFontAspect)
+                while (i < txt.Length)
                 {
-                    while (i < txt.Length && line.Length * fontaspect.X< par.Width)
+                    string line = "";
+                    while (i < txt.Length && line.Length * fontaspect.X < par.Width)
                     {
-                        s.X+= fontaspect.X;
+                        s.X += fontaspect.X;
                         line += txt[i] + " ";
                         i += 1;
                     }
+                    text += line + "\n";
+                    ln += 1;
+                    s.Y += fontaspect.Y;
                 }
-                else
+            }
+            else
+            {
+                while (i < txt.Length)
                 {
+                    string line = "";
                     while (i < txt.Length && GameManager.Font.MeasureString(line).X < par.Width)
                     {
                         line += txt[i] + " ";
                         i += 1;
                     }
+                    text += line + "\n";
+                    ln += 1;
+                    s.Y += fontaspect.Y;
                 }
-                text += line + "\n";
-                ln += 1;
-                s.Y += fontaspect.Y;
             }
             ln += -1;
+            text = text.Remove(text.Length - 2);
         }
 
         if (HasFontAspect)
@@ -496,7 +524,7 @@ public class Text : UI, IEdit<string>
         GameManager.Instance.SpriteBatch.DrawString
                     (GameManager.Font, text, new Vector2(rect.X, rect.Y),
                     this.Color * alpha, 0, Vector2.Zero, Size,
-                    SpriteEffects.None, this.depth + 0.0001f);
+                    SpriteEffects.None, this.depth - 0.0001f);
     }
 }
 

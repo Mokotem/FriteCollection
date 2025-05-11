@@ -1,9 +1,6 @@
 ﻿using FriteCollection.Entity;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 
 /// <summary>
 /// Outils de base de programmation utilisés par les sous-modules de FriteCollection.
