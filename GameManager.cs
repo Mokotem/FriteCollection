@@ -127,9 +127,9 @@ public static class GameManager
     public delegate void TextureModifier(GraphicsDevice graphic, ref SpriteBatch batch, Texture2D texture);
     public delegate void TextureMaker(GraphicsDevice graphic, ref SpriteBatch batch);
 
-    public static void MakeTextureCreator(TextureCreator method)
+    public static Texture2D MakeTextureCreator(TextureCreator method)
     {
-        method(Instance.GraphicsDevice, ref Instance.SpriteBatch);
+        return method(Instance.GraphicsDevice, ref Instance.SpriteBatch);
     }
 
     public static void MakeTextureModifier(TextureModifier method, Texture2D texture)

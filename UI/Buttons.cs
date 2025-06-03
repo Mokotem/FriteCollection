@@ -8,6 +8,12 @@ namespace FriteCollection.UI;
 
 public abstract class ButtonCore : Panel
 {
+    public static void SetDefaultColor(Color value)
+    {
+        defaultColor = value;
+    }
+
+    private static Color defaultColor = new Color(0.8f, 0.8f, 0.8f);
     protected Text titleText;
     private bool enabled = true;
     public bool Enabled
@@ -50,9 +56,11 @@ public abstract class ButtonCore : Panel
         }
     }
 
+    public Color RestColor;
+
     private void SetGreyColor()
     {
-        this.Color = new Color(0.7f, 0.7f, 0.7f);
+        this.Color = this.RestColor * 0.5f;
         if (titleText is not null)
             titleText.Color = new Color(0.7f, 0.7f, 0.7f);
     }
@@ -71,7 +79,7 @@ public abstract class ButtonCore : Panel
                 }
                 else
                 {
-                    this.Color = Color.White;
+                    this.Color = RestColor;
                     if (titleText is not null)
                         titleText.Color = Color.White;
 
@@ -106,23 +114,27 @@ public abstract class ButtonCore : Panel
     public ButtonCore(TileSet tileset, Rectangle space, UI parent) : base(tileset, space, parent)
     {
         I._buttons.Add(this);
+        RestColor = defaultColor;
     }
 
 
     public ButtonCore(TileSet tileset, Rectangle space) : base(tileset, space)
     {
         I._buttons.Add(this);
+        RestColor = defaultColor;
     }
 
     public ButtonCore(Texture2D image, Rectangle space, UI parent) : base(image, space, parent)
     {
         I._buttons.Add(this);
+        RestColor = defaultColor;
     }
 
 
     public ButtonCore(Texture2D image, Rectangle space) : base(image, space)
     {
         I._buttons.Add(this);
+        RestColor = defaultColor;
     }
 
     private static readonly Point offs = new(-3, -2);
@@ -133,6 +145,7 @@ public abstract class ButtonCore : Panel
         titleText.Outline = true;
         this.Add(titleText);
         I._buttons.Add(this);
+        RestColor = defaultColor;
     }
 
     public ButtonCore(string title, TileSet tileset, Rectangle space) : base(tileset, space)
@@ -141,6 +154,7 @@ public abstract class ButtonCore : Panel
         titleText.Outline = true;
         this.Add(titleText);
         I._buttons.Add(this);
+        RestColor = defaultColor;
     }
 
     public ButtonCore(string title, Texture2D image, Rectangle space, UI parent) : base(image, space, parent)
@@ -149,6 +163,7 @@ public abstract class ButtonCore : Panel
         titleText.Outline = true;
         this.Add(titleText);
         I._buttons.Add(this);
+        RestColor = defaultColor;
     }
 
     public ButtonCore(string title, Texture2D image, Rectangle space) : base(image, space)
@@ -157,13 +172,14 @@ public abstract class ButtonCore : Panel
         titleText.Outline = true;
         this.Add(titleText);
         I._buttons.Add(this);
+        RestColor = defaultColor;
     }
 
     public override void Draw()
     {
         if (selected && enabled && Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Released)
         {
-            I.SpriteBatch.Draw(FriteCollection.Entity.Renderer.DefaultTexture,
+            I.SpriteBatch.Draw(Entity.Renderer.DefaultTexture,
                 new Microsoft.Xna.Framework.Rectangle(
                     this.rect.X - 1,
                     this.rect.Y - 1,
@@ -171,11 +187,11 @@ public abstract class ButtonCore : Panel
                     this.rect.Height + 2
                     ),
                 null,
-                Microsoft.Xna.Framework.Color.White,
+                Color.Yellow,
                 0,
                 Vector2.Zero,
                 SpriteEffects.None,
-                this.depth - 0.0001f);
+                this.depth + 0.001f);
         }
         base.Draw();
     }

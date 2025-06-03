@@ -169,10 +169,19 @@ internal static class BoundFunc
     }
 }
 
+public interface ILayer
+{
+    public short Layer
+    {
+        get;
+        set;
+    }
+}
+
 /// <summary>
 /// Permet de décrire l'apparence d'une entité.
 /// </summary>
-public class Renderer : ICopy<Renderer>
+public class Renderer : ICopy<Renderer>, ILayer
 {
     internal static Texture2D _defaultTexture;
     public static Texture2D DefaultTexture => _defaultTexture;
@@ -244,8 +253,8 @@ public class Renderer : ICopy<Renderer>
 
     public static Texture2D CreateFrameTexture(int width, int height, ushort borderSize)
     {
-        Texture2D tex = new Texture2D(GameManager.Instance.GraphicsDevice, width, width);
-        Color[] data = new Microsoft.Xna.Framework.Color[width * width];
+        Texture2D tex = new Texture2D(GameManager.Instance.GraphicsDevice, width, height);
+        Color[] data = new Color[width * height];
         for (int i = 0; i < width; i += 1)
         {
             for (int j = 0; j < height; j += 1)

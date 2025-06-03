@@ -22,7 +22,7 @@ public interface IEdit<T>
 
 public abstract class UI : IDisposable
 {
-    internal float depth = 0.05f;
+    internal float depth = 0.5f;
     public class Rectangle
     {
         public Extend Extend = Extend.None;
@@ -174,7 +174,14 @@ public abstract class UI : IDisposable
     public bool Active
     {
         get => _active;
-        set => _active = value;
+        set
+        {
+            _active = value;
+            foreach(UI c in childs)
+            {
+                c.Active = value;
+            }
+        }
     }
 
     private protected Microsoft.Xna.Framework.Rectangle rect;
@@ -184,7 +191,7 @@ public abstract class UI : IDisposable
 
     public void Add(UI element)
     {
-        element.depth = this.depth + 0.05f;
+        element.depth = this.depth - 0.05f;
         childs.Add(element);
     }
     public void FlexChilds(Point spacing, Point offset)
@@ -327,7 +334,7 @@ public class Image : UI, IEdit<Texture2D>
         this.space = space;
         base.ApplyScale(parent.mRect);
         base.ApplyPosition(parent.mRect);
-        this.depth = parent.depth + 0.05f;
+        this.depth = parent.depth - 0.05f;
     }
 
     public override void Draw()
@@ -381,8 +388,6 @@ public class Text : UI, IEdit<string>
             if (value != text)
             {
                 this.text = value;
-                ApplyText(value);
-                ApplyPosition(par);
             }
         }
     }
@@ -478,7 +483,7 @@ public class Text : UI, IEdit<string>
         ApplyText(txt);
         base.ApplyPosition(space.EnviRect);
         par = space.EnviRect;
-        Outline = false;
+        Outline = true;
     }
 
     public Text(string txt, Rectangle space, UI parent) : base()
@@ -490,8 +495,8 @@ public class Text : UI, IEdit<string>
         ApplyText(txt);
         base.ApplyPosition(parent.mRect);
         par = parent.mRect;
-        Outline = false;
-        this.depth = parent.depth + 0.05f;
+        Outline = true;
+        this.depth = parent.depth - 0.05f;
     }
 
     public override void Draw()
@@ -516,15 +521,15 @@ public class Text : UI, IEdit<string>
                 {
                     GameManager.Instance.SpriteBatch.DrawString
                     (GameManager.Font, text, new Vector2(rect.X + r.X, rect.Y + r.Y),
-                    Microsoft.Xna.Framework.Color.Black * alpha, 0, Vector2.Zero, Size,
-                    SpriteEffects.None, this.depth);
+                    Color.Black * alpha, 0, Vector2.Zero, Size,
+                    SpriteEffects.None, this.depth + 0.0001f);
                 }
             }
         }
         GameManager.Instance.SpriteBatch.DrawString
                     (GameManager.Font, text, new Vector2(rect.X, rect.Y),
                     this.Color * alpha, 0, Vector2.Zero, Size,
-                    SpriteEffects.None, this.depth - 0.0001f);
+                    SpriteEffects.None, this.depth);
     }
 }
 
@@ -627,7 +632,7 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
         this.papa = parent;
         this.space = space;
         ApplySpace(parent.mRect);
-        this.depth = parent.depth + 0.05f;
+        this.depth = parent.depth - 0.05f;
     }
 
     public Panel(TileSet tileSet, Rectangle space) : base()
@@ -643,7 +648,7 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
         this.space = space;
         ApplySpace(parent.mRect);
         this.texture = CreatePanelTexture(tileSet, new Point(rect.Width, rect.Height));
-        this.depth = parent.depth + 0.05f;
+        this.depth = parent.depth - 0.05f;
     }
 
     public Panel(Texture2D image, Rectangle space) : base()
@@ -659,7 +664,7 @@ public class Panel : UI, IDisposable, IEdit<Texture2D>
         this.space = space;
         ApplySpace(parent.mRect);
         this.texture = image;
-        this.depth = parent.depth + 0.05f;
+        this.depth = parent.depth - 0.05f;
     }
 
     public override void Draw()

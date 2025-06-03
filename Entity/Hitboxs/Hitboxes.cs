@@ -519,12 +519,12 @@ public abstract class Hitbox
             {
                 p2 = new Vector2(_point.X + _refSpace.Scale.X, _point.Y + _refSpace.Scale.Y);
             }
-                _centerPoint = new Vector2((_point.X + p2.X) / 2f, (_point.Y + p2.Y) / 2f);
 
             _point.X += PositionOffset.X;
             _point.Y += -PositionOffset.Y;
             p2.X += PositionOffset.X;
             p2.Y += -PositionOffset.Y;
+            _centerPoint = new Vector2((_point.X + p2.X) / 2f, (_point.Y + p2.Y) / 2f);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -577,12 +577,12 @@ public abstract class Hitbox
             return false;
         }
 
-        private bool PointInRange(Vector2 p, Vector2 _1, Vector2 _2, out float distX, out float distY)
+        private bool PointInRange(Vector2 p, Vector2 _1, Vector2 _2, bool up, bool right, out float distX, out float distY)
         {
             if (p.X > _1.X && p.X < _2.X && p.Y > _1.Y && p.Y < _2.Y)
             {
-                distX = float.Min(p.X - _1.X, _2.X - p.X);
-                distY = float.Min(p.Y - _1.Y, _2.Y - p.Y);
+                distX = right ? p.X - _1.X : _2.X - p.X;
+                distY = up ? _2.Y - p.Y :  p.Y - _1.Y;
                 return true;
             }
 
@@ -625,7 +625,7 @@ public abstract class Hitbox
             byte i = 0;
             foreach (Vector2 p in this)
             {
-                if (PointInRange(p, hit._point, hit.p2, out float dx, out float dy))
+                if (PointInRange(p, hit._point, hit.p2, i < 2, i % 2 == 1, out float dx, out float dy))
                 {
                     bools[i] = true;
                     global[i] = true;
@@ -653,7 +653,10 @@ public abstract class Hitbox
 
                 i += 1;
             }
-
+            //if (colided)
+            //{
+            //    GameManager.Print(closePoint, _CountBools(bools));
+            //}
             if (colided)
             {
                 byte n = _CountBools(bools);
@@ -730,7 +733,7 @@ public abstract class Hitbox
             byte i = 0;
             foreach (Vector2 p in this)
             {
-                if (PointInRange(p, hit._point, hit.p2, out float dx, out float dy))
+                if (PointInRange(p, hit._point, hit.p2, i < 2, i % 2 == 1, out float dx, out float dy))
                 {
                     bools[i] = true;
                     colided = true;
@@ -775,24 +778,16 @@ public abstract class Hitbox
                     if (closePoint.X < closePoint.Y)
                     {
                         if (_centerPoint.X > hit.CenterPoint.X)
-                        {
                             return Sides.Left;
-                        }
                         else
-                        {
                             return Sides.Right;
-                        }
                     }
                     else
                     {
-                        if (_centerPoint.Y > hit.CenterPoint.Y)
-                        {
+                        if (_centerPoint.Y < hit.CenterPoint.Y)
                             return Sides.Up;
-                        }
                         else
-                        {
                             return Sides.Down;
-                        }
                     }
                 }
             }
@@ -902,7 +897,8 @@ public abstract class Hitbox
                         (int)_point.X, (int)_point.Y, (int)(p2.X - _point.X), (int)(p2.Y - _point.Y)
                     ),
                     _color[_layer],
-                    1
+                    1,
+                    layerDepth: 0
                 );
             }
         }

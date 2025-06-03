@@ -369,7 +369,7 @@ public class MonoGameDefaultPixel : FriteModel.MonoGame
 
         Point target = new Point(S.GameFixeWidth, S.GameFixeHeight);
         int n = 2;
-        while (target.X * n < user.X && target.Y * n < user.Y)
+        while (target.X * n <= user.X && target.Y * n <= user.Y)
             n += 1;
         n += -1;
         Point scale = new Point(target.X * n, target.Y * n);

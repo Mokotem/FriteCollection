@@ -108,7 +108,6 @@ public static class Time
 {
     private static float _sp = 1f;
     private static float _frameTime = 1f / GameManager.Fps;
-    private static double reset = 0d;
 
     public static float SpaceTime
     {
@@ -148,14 +147,14 @@ public static class Time
 
     internal static void UpdateGameTime(in GameTime gt)
     {
-        timer = (gt.TotalGameTime.TotalMicroseconds / 1000000d) - reset;
+        timer += gt.ElapsedGameTime.TotalMicroseconds / 1000000d;
         dt = gt.ElapsedGameTime.TotalMicroseconds / 1000000d;
         dtf = (float)gt.ElapsedGameTime.TotalMilliseconds / 1000f;
     }
 
     internal static void Reset(in GameTime gt)
     {
-        reset = gt.TotalGameTime.TotalMicroseconds / 1000000d;
+        timer = 0f;
     }
 
     private static double timer, dt;
